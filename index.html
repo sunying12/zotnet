@@ -31,6 +31,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-danger{background:#e74c3c;color:white;}.btn-danger:hover{background:#c0392b;}
 .btn-restore{background:#27ae60;color:white;}.btn-restore:hover{background:#219150;}
 .btn-sm{padding:0.28rem 0.65rem;font-size:0.76rem;}
+.btn-delete-xs{padding:0.18rem 0.42rem!important;font-size:0.67rem!important;border-radius:6px!important;opacity:0.72;}
+.btn-delete-xs:hover{opacity:1;}
+
 /* STAT GRID */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;}
 .stat-card{background:white;border-radius:12px;padding:1.15rem;box-shadow:0 1px 3px rgba(0,0,0,0.07);border-left:4px solid #2d6a4f;}
@@ -589,7 +592,7 @@ function renderPeople() {
         </div>
         <div class="card-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm" onclick="editPerson('${p.id}')">✏️ Edit</button>
-          <button class="btn btn-danger btn-sm"    onclick="softDeletePerson('${p.id}')">🗑️ Delete</button>
+          <button class="btn btn-danger btn-sm btn-delete-xs"    onclick="softDeletePerson('${p.id}')">🗑️</button>
         </div>
       </div>`;
   }).join('');
@@ -629,14 +632,14 @@ function showProfile(id) {
           ${needsFollowUp(i)?`<div class="action-box"><label class="checkbox-row" style="margin-bottom:0.25rem;"><input type="checkbox" class="action-check" onchange="toggleActionCompleted('${i.id}',this.checked)"> <strong>Action needed:</strong></label>${esc(followUpText(i))}<br><span style="font-size:0.74rem;color:#8a6d1d;">${esc(actionDueLabel(i))}</span></div>`:(i.actionCompleted?`<div class="action-box done"><label class="checkbox-row" style="margin-bottom:0.25rem;"><input type="checkbox" class="action-check" checked onchange="toggleActionCompleted('${i.id}',this.checked)"> <strong>Action completed:</strong></label>${esc(followUpText(i))}</div>`:'')}
           <div class="timeline-actions">
             <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editInteraction('${i.id}')">✏️ Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️ Delete</button>
+            <button class="btn btn-danger btn-sm btn-delete-xs" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️</button>
           </div>
         </div>`).join('')}</div>` : '<p style="font-size:0.82rem;color:#bbb;">No interactions logged yet. Use “Add Interaction” to add dated notes for this person.</p>'}
     </div>
     <div class="modal-actions" style="margin-top:1.15rem;border-top:1px solid #f0f0f0;padding-top:1.15rem;">
       <button class="btn btn-primary"   onclick="openLogInteraction('${p.id}')">💬 Add Interaction</button>
       <button class="btn btn-secondary" onclick="editPerson('${p.id}')">✏️ Edit Person</button>
-      <button class="btn btn-danger"    onclick="softDeletePerson('${p.id}')">🗑️ Move to Trash</button>
+      <button class="btn btn-danger btn-sm btn-delete-xs"    onclick="softDeletePerson('${p.id}')">🗑️</button>
     </div>`;
   openModal('modal-profile');
 }
@@ -915,7 +918,7 @@ function renderInteractions() {
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.45rem;flex-shrink:0;">
                 <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
                 <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editInteraction('${i.id}')">✏️ Edit</button>
-                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️ Delete</button>
+                <button class="btn btn-danger btn-sm btn-delete-xs" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️</button>
               </div>
             </div>`).join('')}
         </div>
@@ -958,7 +961,7 @@ function renderTrash() {
           </div>
           <div class="trash-actions">
             <button class="btn btn-restore btn-sm" onclick="restorePerson('${p.id}')">♻️ Restore</button>
-            <button class="btn btn-danger btn-sm"  onclick="permanentDelete('${p.id}')">✕ Delete Now</button>
+            <button class="btn btn-danger btn-sm btn-delete-xs"  onclick="permanentDelete('${p.id}')">✕</button>
           </div>
         </div>`;
     }).join('')}` : '';
@@ -982,7 +985,7 @@ function renderTrash() {
           </div>
           <div class="trash-actions">
             <button class="btn btn-restore btn-sm" onclick="restoreInteraction('${i.id}')">♻️ Restore Note</button>
-            <button class="btn btn-danger btn-sm"  onclick="permanentDeleteInteraction('${i.id}')">✕ Delete Now</button>
+            <button class="btn btn-danger btn-sm btn-delete-xs"  onclick="permanentDeleteInteraction('${i.id}')">✕</button>
           </div>
         </div>`;
     }).join('')}` : '';
@@ -1242,6 +1245,6 @@ renderGuide();
 updateTrashBadge();
 </script>
 
-<!-- ROOTSTOCK V9 PEOPLE INTERACTION SUMMARY MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
+<!-- ROOTSTOCK V10 SMALL DELETE BUTTONS MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
 </body>
 </html>
