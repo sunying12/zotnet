@@ -1,7 +1,7 @@
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open('zotnet-v1').then(cache =>
-      cache.addAll(['/', '/zotnet.html', '/manifest.json'])
+      cache.addAll(['/', '/index.html', '/manifest.json'])
     )
   );
 });

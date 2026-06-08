@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZotNet</title>
-<link rel="manifest" href="manifest.json">
+<title>Rootstock</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;}
@@ -65,7 +64,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;}
 .fsel:focus{border-color:#7c83fd;}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
 .modal{background:white;border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;}
-.modal-lg{max-width:660px;}
+.modal-lg{max-width:680px;}
 .mhdr{padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between;}
 .mhdr h3{font-size:16px;font-weight:600;}
 .mclose{background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1;}
@@ -77,17 +76,37 @@ label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5
 input,select,textarea{width:100%;padding:8px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;outline:none;font-family:inherit;}
 input:focus,select:focus,textarea:focus{border-color:#7c83fd;box-shadow:0 0 0 3px rgba(124,131,253,0.1);}
 textarea{resize:vertical;min-height:72px;}
+/* TIMELINE STYLES */
+.timeline{position:relative;padding-left:20px;}
+.timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:#e5e7eb;}
+.tl-item{position:relative;margin-bottom:16px;}
+.tl-dot{position:absolute;left:-17px;top:4px;width:10px;height:10px;border-radius:50%;background:#7c83fd;border:2px solid white;box-shadow:0 0 0 2px #7c83fd;}
+.tl-dot.positive{background:#10b981;box-shadow:0 0 0 2px #10b981;}
+.tl-dot.neutral{background:#9ca3af;box-shadow:0 0 0 2px #9ca3af;}
+.tl-dot.followup{background:#f59e0b;box-shadow:0 0 0 2px #f59e0b;}
+.tl-card{background:#f9fafb;border-radius:9px;padding:12px 14px;border-left:3px solid #7c83fd;}
+.tl-card.positive{border-left-color:#10b981;}
+.tl-card.neutral{border-left-color:#9ca3af;}
+.tl-card.followup{border-left-color:#f59e0b;}
+.tl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.tl-type{font-weight:600;font-size:13px;}
+.tl-date{font-size:11px;color:#9ca3af;font-weight:500;}
+.tl-notes{font-size:12px;color:#374151;line-height:1.5;margin-bottom:7px;}
+.tl-foot{display:flex;justify-content:space-between;align-items:center;}
+.sbadge{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.sp{background:#d1fae5;color:#065f46;}
+.sn{background:#f3f4f6;color:#374151;}
+.sf{background:#fef3c7;color:#92400e;}
+.add-int-banner{background:#f0f0ff;border:1px dashed #7c83fd;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;cursor:pointer;}
+.add-int-banner:hover{background:#e8e8ff;}
+.add-int-banner span{font-size:13px;color:#7c83fd;font-weight:500;}
 .iitem{padding:13px;background:#f9fafb;border-radius:9px;margin-bottom:9px;border-left:4px solid #7c83fd;}
 .ihead{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
 .itype{font-weight:600;font-size:13px;}
 .idate{font-size:11px;color:#9ca3af;}
 .inotes{font-size:13px;color:#374151;line-height:1.5;}
 .ifoot{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-.sbadge{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
-.sp{background:#d1fae5;color:#065f46;}
-.sn{background:#f3f4f6;color:#374151;}
-.sf{background:#fef3c7;color:#92400e;}
-.det-header{display:flex;align-items:center;gap:18px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6;}
+.det-header{display:flex;align-items:center;gap:18px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f3f4f6;}
 .det-info h2{font-size:20px;font-weight:700;}
 .det-info p{color:#6b7280;margin-top:3px;font-size:13px;}
 .dsec{margin-bottom:18px;}
@@ -103,439 +122,7 @@ textarea{resize:vertical;min-height:72px;}
 .bar-cont{flex:1;height:7px;background:#f3f4f6;border-radius:4px;overflow:hidden;}
 .bar-fill{height:100%;border-radius:4px;background:#7c83fd;}
 .bar-cnt{font-size:11px;color:#9ca3af;width:18px;text-align:right;flex-shrink:0;}
-.empty-state{text-align:center;padding:50px 20px;color:#9ca3af;}
-.empty-icon{font-size:42px;margin-bottom:14px;}
-.empty-state h3{font-size:16px;font-weight:600;color:#374151;margin-bottom:7px;}
-.empty-state p{font-size:13px;}
-.tabs{display:flex;gap:3px;border-bottom:1px solid #e5e7eb;margin-bottom:18px;}
-.tab{padding:9px 14px;font-size:13px;cursor:pointer;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
-.tab.active{color:#7c83fd;border-bottom-color:#7c83fd;font-weight:500;}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
-.pcard{padding:13px;border-radius:9px;border:1px solid #e5e7eb;}
-.pcard h4{font-size:13px;font-weight:700;margin-bottom:4px;}
-.pcard p{font-size:11px;color:#6b7280;line-height:1.5;}
-.pcard .tip{color:#7c83fd;font-weight:500;margin-top:5px;}
-.ritem{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;}
-.ritem:last-child{border-bottom:none;}
-.hidden{display:none!important;}
-.c0{background:#7c83fd;}.c1{background:#f59e0b;}.c2{background:#10b981;}.c3{background:#ef4444;}.c4{background:#8b5cf6;}.c5{background:#06b6d4;}.c6{background:#f97316;}.c7{background:#ec4899;}
-@media(max-width:700px){
-  .sidebar{width:52px;}
-  .sidebar-logo,.nav-section-title,.nav-item span{display:none;}
-  .nav-item{justify-content:center;padding:11px;}
-  .stats-grid{grid-template-columns:repeat(2,1fr);}
-  .dash-grid{grid-template-columns:1fr;}
-  .frow{grid-template-columns:1fr;}
-  .content{padding:14px;}
-}
-</style>
-</head>
-<body>
-<div class="app">
-
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-logo">
-      <h2>🕸️ ZotNet</h2>
-      <p>Personal Network Manager</p>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-title">Main</div>
-      <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard',this)"><span>📊</span><span>Dashboard</span></div>
-      <div class="nav-item" id="nav-people" onclick="navigate('people',this)"><span>👥</span><span>People</span></div>
-      <div class="nav-item" id="nav-interactions" onclick="navigate('interactions',this)"><span>💬</span><span>Interactions</span></div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-title">Learn</div>
-      <div class="nav-item" id="nav-guide" onclick="navigate('guide',this)"><span>🧠</span><span>Personality Guide</span></div>
-    </div>
-  </div>
-
-  <div class="main">
-
-    <!-- DASHBOARD VIEW -->
-    <div id="view-dashboard">
-      <div class="header">
-        <h1>Dashboard</h1>
-        <div class="header-actions">
-          <button class="btn btn-primary" onclick="openAddPerson()">+ Add Person</button>
-        </div>
-      </div>
-      <div class="content">
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Total People</div><div class="stat-value" id="s-total">0</div><div class="stat-sub">in your network</div></div>
-          <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-label">Interactions</div><div class="stat-value" id="s-ints">0</div><div class="stat-sub">total logged</div></div>
-          <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-label">Need Follow-up</div><div class="stat-value" id="s-fu">0</div><div class="stat-sub">action needed</div></div>
-          <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-label">Categories</div><div class="stat-value" id="s-cats">0</div><div class="stat-sub">relationship types</div></div>
-        </div>
-        <div class="dash-grid">
-          <div class="section">
-            <div class="section-header"><div class="section-title">Recent Activity</div></div>
-            <div id="d-activity"></div>
-          </div>
-          <div>
-            <div class="section" style="margin-bottom:18px">
-              <div class="section-header"><div class="section-title">Network by Category</div></div>
-              <div id="d-cats"></div>
-            </div>
-            <div class="section">
-              <div class="section-header"><div class="section-title">Reconnect Soon</div></div>
-              <div id="d-reconnect"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PEOPLE VIEW -->
-    <div id="view-people" class="hidden">
-      <div class="header">
-        <h1>People</h1>
-        <div class="header-actions">
-          <button class="btn btn-primary" onclick="openAddPerson()">+ Add Person</button>
-        </div>
-      </div>
-      <div class="content">
-        <div class="filters">
-          <input type="text" class="search-input" id="psearch" placeholder="🔍  Search name, role, company, tags…" oninput="renderPeople()">
-          <select class="fsel" id="fcat" onchange="renderPeople()">
-            <option value="">All Categories</option>
-            <option>Mentor</option><option>Peer</option><option>Collaborator</option>
-            <option>Friend</option><option>Family</option><option>Professional</option><option>Acquaintance</option>
-          </select>
-          <select class="fsel" id="fmbti" onchange="renderPeople()">
-            <option value="">All MBTI</option>
-            <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
-            <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
-            <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
-            <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
-          </select>
-        </div>
-        <div class="people-grid" id="pgrid"></div>
-      </div>
-    </div>
-
-    <!-- INTERACTIONS VIEW -->
-    <div id="view-interactions" class="hidden">
-      <div class="header">
-        <h1>All Interactions</h1>
-        <div class="header-actions">
-          <button class="btn btn-primary" onclick="openLogInt(null)">+ Log Interaction</button>
-        </div>
-      </div>
-      <div class="content"><div id="all-ints"></div></div>
-    </div>
-
-    <!-- GUIDE VIEW -->
-    <div id="view-guide" class="hidden">
-      <div class="header"><h1>Personality Guide</h1></div>
-      <div class="content">
-        <div class="tabs">
-          <div class="tab active" onclick="switchTab('mbti',this)">MBTI Types</div>
-          <div class="tab" onclick="switchTab('disc',this)">DISC</div>
-          <div class="tab" onclick="switchTab('tips',this)">Identification Tips</div>
-        </div>
-        <div id="g-mbti" class="pgrid"></div>
-        <div id="g-disc" class="pgrid hidden"></div>
-        <div id="g-tips" class="hidden"></div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ADD / EDIT PERSON MODAL -->
-<div id="m-person" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="mhdr"><h3 id="mp-title">Add Person</h3><button class="mclose" onclick="cm('m-person')">×</button></div>
-    <div class="mbody">
-      <input type="hidden" id="p-id">
-      <div class="frow">
-        <div class="fg"><label>Full Name *</label><input id="p-name" placeholder="e.g. Jane Smith"></div>
-        <div class="fg"><label>Company / Org</label><input id="p-company" placeholder="e.g. Google, UCI"></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label>Role / Title</label><input id="p-role" placeholder="e.g. Professor, Engineer"></div>
-        <div class="fg"><label>Email</label><input type="email" id="p-email" placeholder="email@example.com"></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label>Relationship Category</label>
-          <select id="p-cat"><option value="">Select…</option><option>Mentor</option><option>Peer</option><option>Collaborator</option><option>Friend</option><option>Family</option><option>Professional</option><option>Acquaintance</option></select>
-        </div>
-        <div class="fg"><label>MBTI Type (your guess)</label>
-          <select id="p-mbti"><option value="">Unknown</option><option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option><option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option><option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option><option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option></select>
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label>DISC Type</label>
-          <select id="p-disc"><option value="">Unknown</option><option value="D">D — Dominant</option><option value="I">I — Influential</option><option value="S">S — Steady</option><option value="C">C — Conscientious</option></select>
-        </div>
-        <div class="fg"><label>Enneagram</label>
-          <select id="p-enn"><option value="">Unknown</option><option value="1">1 — Reformer</option><option value="2">2 — Helper</option><option value="3">3 — Achiever</option><option value="4">4 — Individualist</option><option value="5">5 — Investigator</option><option value="6">6 — Loyalist</option><option value="7">7 — Enthusiast</option><option value="8">8 — Challenger</option><option value="9">9 — Peacemaker</option></select>
-        </div>
-      </div>
-      <div class="fg"><label>Why do they matter to your vision? *</label><textarea id="p-purpose" placeholder="e.g. Can open doors at tech companies, advise on AI research…"></textarea></div>
-      <div class="fg"><label>How to engage them (communication style)</label><textarea id="p-comm" placeholder="e.g. Direct emailer, loves data, prefers scheduled calls…" style="min-height:56px"></textarea></div>
-      <div class="fg"><label>Tags (comma-separated)</label><input id="p-tags" placeholder="e.g. AI, Research, Startup, Career"></div>
-      <div class="fg"><label>Personal Notes</label><textarea id="p-notes" placeholder="Anything else to remember…" style="min-height:56px"></textarea></div>
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-secondary" onclick="cm('m-person')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePerson()">Save Person</button>
-    </div>
-  </div>
-</div>
-
-<!-- PERSON DETAIL MODAL -->
-<div id="m-detail" class="modal-overlay hidden">
-  <div class="modal modal-lg">
-    <div class="mhdr"><h3>Person Profile</h3><button class="mclose" onclick="cm('m-detail')">×</button></div>
-    <div class="mbody" id="m-detail-body"></div>
-    <div class="mfoot" id="m-detail-foot"></div>
-  </div>
-</div>
-
-<!-- LOG INTERACTION MODAL -->
-<div id="m-int" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="mhdr"><h3>Log Interaction</h3><button class="mclose" onclick="cm('m-int')">×</button></div>
-    <div class="mbody">
-      <input type="hidden" id="int-id">
-      <div class="fg">
-        <label>Person *</label>
-        <select id="int-person-sel"></select>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>Type</label>
-          <select id="int-type">
-            <option>Meeting</option><option>Call</option><option>Email</option>
-            <option>Message</option><option>Event</option><option>Other</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Date</label>
-          <input type="date" id="int-date">
-        </div>
-      </div>
-      <div class="fg">
-        <label>Notes</label>
-        <textarea id="int-notes" placeholder="What was discussed? Key takeaways, follow-ups…"></textarea>
-      </div>
-      <div class="fg">
-        <label>Sentiment</label>
-        <select id="int-sentiment">
-          <option>Positive</option><option>Neutral</option><option>Follow-up needed</option>
-        </select>
-      </div>
-    </div>
-    <div class="mfoot">
-      <button class="btn btn-secondary" onclick="cm('m-int')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveInteraction()">Save Interaction</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ========================
-// DATA
-// ========================
-let people = [];
-let interactions = [];
-
-// ========================
-// STORAGE  ← PHASE 1 CORE
-// ========================
-function saveData() {
-  localStorage.setItem('zotnet_people', JSON.stringify(people));
-  localStorage.setItem('zotnet_ints', JSON.stringify(interactions));
-}
-
-function loadData() {
-  const p = localStorage.getItem('zotnet_people');
-  const i = localStorage.getItem('zotnet_ints');
-  if (p) people = JSON.parse(p);
-  if (i) interactions = JSON.parse(i);
-}
-
-loadData(); // ← runs immediately on page load
-
-// ========================
-// HELPERS
-// ========================
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-function initials(name) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
-function timeAgo(d) {
-  const diff = Date.now() - new Date(d).getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return days + 'd ago';
-  if (days < 30) return Math.floor(days / 7) + 'w ago';
-  if (days < 365) return Math.floor(days / 30) + 'mo ago';
-  return Math.floor(days / 365) + 'y ago';
-}
-
-// ========================
-// NAVIGATION
-// ========================
-function navigate(view, el) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
-  document.getElementById('view-' + view).classList.remove('hidden');
-  if (view === 'dashboard') renderDashboard();
-  if (view === 'people') renderPeople();
-  if (view === 'interactions') renderAllInteractions();
-  if (view === 'guide') renderGuide();
-}
-
-// ========================
-// MODAL HELPERS
-// ========================
-function cm(id) { document.getElementById(id).classList.add('hidden'); }
-function om(id) { document.getElementById(id).classList.remove('hidden'); }
-
-// ========================
-// DASHBOARD
-// ========================
-function renderDashboard() {
-  document.getElementById('s-total').textContent = people.length;
-  document.getElementById('s-ints').textContent = interactions.length;
-  const fu = interactions.filter(i => i.sentiment === 'Follow-up needed').length;
-  document.getElementById('s-fu').textContent = fu;
-  const cats = [...new Set(people.map(p => p.category).filter(Boolean))].length;
-  document.getElementById('s-cats').textContent = cats;
-
-  // Recent activity
-  const act = document.getElementById('d-activity');
-  const recent = [...interactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
-  if (recent.length === 0) {
-    act.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Log your first interaction to see activity here.</p></div>';
-  } else {
-    act.innerHTML = recent.map(i => {
-      const person = people.find(p => p.id === i.personId);
-      return `<div class="act-item">
-        <div class="act-dot"></div>
-        <div>
-          <div class="act-text"><strong>${person ? person.name : 'Unknown'}</strong> — ${i.type}${i.notes ? ': ' + i.notes.slice(0, 60) + (i.notes.length > 60 ? '…' : '') : ''}</div>
-          <div class="act-time">${timeAgo(i.date)}</div>
-        </div>
-       Here is the complete file. Copy everything between the triple backticks and save as `zotnet.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZotNet</title>
-<link rel="manifest" href="manifest.json">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;}
-.app{display:flex;height:100vh;}
-.sidebar{width:220px;background:#1a1a2e;color:white;display:flex;flex-direction:column;padding:0;flex-shrink:0;}
-.sidebar-logo{padding:18px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.1);}
-.sidebar-logo h2{font-size:19px;color:#7c83fd;}
-.sidebar-logo p{font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;}
-.nav-section{padding:14px 0;}
-.nav-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.3);padding:0 18px;margin-bottom:6px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:rgba(255,255,255,0.65);transition:all 0.2s;font-size:13px;border-left:3px solid transparent;}
-.nav-item:hover{background:rgba(124,131,253,0.12);color:white;}
-.nav-item.active{background:rgba(124,131,253,0.2);color:#7c83fd;border-left-color:#7c83fd;}
-.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-.header{background:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:10;}
-.header h1{font-size:18px;font-weight:600;}
-.header-actions{display:flex;gap:10px;}
-.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s;}
-.btn-primary{background:#7c83fd;color:white;}
-.btn-primary:hover{background:#6369e8;}
-.btn-secondary{background:#f3f4f6;color:#374151;}
-.btn-secondary:hover{background:#e5e7eb;}
-.btn-danger{background:#fee2e2;color:#dc2626;}
-.btn-danger:hover{background:#fecaca;}
-.btn-sm{padding:4px 10px;font-size:12px;}
-.content{padding:20px 28px;flex:1;}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
-.stat-card{background:white;border-radius:11px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-.stat-label{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;}
-.stat-value{font-size:26px;font-weight:700;color:#1a1a2e;margin:6px 0 3px;}
-.stat-sub{font-size:11px;color:#9ca3af;}
-.stat-icon{float:right;font-size:20px;opacity:0.6;}
-.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
-.section{background:white;border-radius:11px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:18px;}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.section-title{font-size:14px;font-weight:600;}
-.people-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
-.person-card{background:white;border-radius:11px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;border:2px solid transparent;}
-.person-card:hover{border-color:#7c83fd;transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.1);}
-.pcard-header{display:flex;align-items:center;gap:11px;margin-bottom:11px;}
-.avatar{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:white;flex-shrink:0;}
-.av-lg{width:64px;height:64px;border-radius:14px;font-size:22px;}
-.pname{font-weight:600;font-size:14px;}
-.prole{font-size:11px;color:#6b7280;margin-top:2px;}
-.badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;}
-.bm{background:#ede9fe;color:#7c3aed;}
-.bd{background:#dbeafe;color:#1d4ed8;}
-.bc{background:#d1fae5;color:#065f46;}
-.be{background:#fef3c7;color:#92400e;}
-.ppurpose{font-size:12px;color:#6b7280;line-height:1.5;}
-.pfoot{margin-top:11px;padding-top:10px;border-top:1px solid #f3f4f6;display:flex;justify-content:space-between;}
-.pfoot span{font-size:11px;color:#9ca3af;}
-.filters{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
-.search-input{flex:1;min-width:180px;padding:7px 12px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;outline:none;}
-.search-input:focus{border-color:#7c83fd;}
-.fsel{padding:7px 12px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;outline:none;background:white;cursor:pointer;}
-.fsel:focus{border-color:#7c83fd;}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;}
-.modal{background:white;border-radius:14px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;}
-.modal-lg{max-width:660px;}
-.mhdr{padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between;}
-.mhdr h3{font-size:16px;font-weight:600;}
-.mclose{background:none;border:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1;}
-.mbody{padding:18px 22px;}
-.mfoot{padding:0 22px 20px;display:flex;gap:9px;justify-content:flex-end;}
-.fg{margin-bottom:14px;}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5px;}
-input,select,textarea{width:100%;padding:8px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;outline:none;font-family:inherit;}
-input:focus,select:focus,textarea:focus{border-color:#7c83fd;box-shadow:0 0 0 3px rgba(124,131,253,0.1);}
-textarea{resize:vertical;min-height:72px;}
-.iitem{padding:13px;background:#f9fafb;border-radius:9px;margin-bottom:9px;border-left:4px solid #7c83fd;}
-.ihead{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
-.itype{font-weight:600;font-size:13px;}
-.idate{font-size:11px;color:#9ca3af;}
-.inotes{font-size:13px;color:#374151;line-height:1.5;}
-.ifoot{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-.sbadge{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
-.sp{background:#d1fae5;color:#065f46;}
-.sn{background:#f3f4f6;color:#374151;}
-.sf{background:#fef3c7;color:#92400e;}
-.det-header{display:flex;align-items:center;gap:18px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6;}
-.det-info h2{font-size:20px;font-weight:700;}
-.det-info p{color:#6b7280;margin-top:3px;font-size:13px;}
-.dsec{margin-bottom:18px;}
-.dsec h4{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:9px;}
-.dsec p{font-size:13px;color:#374151;line-height:1.6;}
-.act-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;}
-.act-item:last-child{border-bottom:none;}
-.act-dot{width:7px;height:7px;border-radius:50%;background:#7c83fd;margin-top:5px;flex-shrink:0;}
-.act-text{font-size:12px;color:#374151;line-height:1.5;}
-.act-time{font-size:11px;color:#9ca3af;margin-top:1px;}
-.bar-item{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
-.bar-label{font-size:12px;color:#374151;width:90px;flex-shrink:0;}
-.bar-cont{flex:1;height:7px;background:#f3f4f6;border-radius:4px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:4px;background:#7c83fd;}
-.bar-cnt{font-size:11px;color:#9ca3af;width:18px;text-align:right;flex-shrink:0;}
-.empty-state{text-align:center;padding:50px 20px;color:#9ca3af;}
+.empty-state{text-align:center;padding:40px 20px;color:#9ca3af;}
 .empty-icon{font-size:42px;margin-bottom:14px;}
 .empty-state h3{font-size:16px;font-weight:600;color:#374151;margin-bottom:7px;}
 .empty-state p{font-size:13px;}
@@ -564,10 +151,9 @@ textarea{resize:vertical;min-height:72px;}
 </head>
 <body>
 <div class="app">
-
   <div class="sidebar">
     <div class="sidebar-logo">
-      <h2>🕸️ ZotNet</h2>
+      <h2>🌱 Rootstock</h2>
       <p>Personal Network Manager</p>
     </div>
     <div class="nav-section">
@@ -583,7 +169,6 @@ textarea{resize:vertical;min-height:72px;}
   </div>
 
   <div class="main">
-
     <div id="view-dashboard">
       <div class="header">
         <h1>Dashboard</h1>
@@ -667,7 +252,6 @@ textarea{resize:vertical;min-height:72px;}
         <div id="g-tips" class="hidden"></div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -725,7 +309,7 @@ textarea{resize:vertical;min-height:72px;}
 <!-- LOG INTERACTION MODAL -->
 <div id="m-int" class="modal-overlay hidden">
   <div class="modal">
-    <div class="mhdr"><h3>Log Interaction</h3><button class="mclose" onclick="cm('m-int')">×</button></div>
+    <div class="mhdr"><h3 id="mint-title">Log Interaction</h3><button class="mclose" onclick="cm('m-int')">×</button></div>
     <div class="mbody">
       <input type="hidden" id="int-id">
       <div class="fg">
@@ -741,13 +325,13 @@ textarea{resize:vertical;min-height:72px;}
           </select>
         </div>
         <div class="fg">
-          <label>Date</label>
+          <label>Date *</label>
           <input type="date" id="int-date">
         </div>
       </div>
       <div class="fg">
         <label>Notes</label>
-        <textarea id="int-notes" placeholder="What was discussed? Key takeaways, follow-ups…"></textarea>
+        <textarea id="int-notes" placeholder="What was discussed? Key takeaways, action items, follow-ups…"></textarea>
       </div>
       <div class="fg">
         <label>Sentiment</label>
@@ -764,53 +348,41 @@ textarea{resize:vertical;min-height:72px;}
 </div>
 
 <script>
-// ========================
-// DATA
-// ========================
 let people = [];
 let interactions = [];
 
-// ========================
-// PHASE 1: LOCAL STORAGE
-// ========================
 function saveData() {
-  localStorage.setItem('zotnet_people', JSON.stringify(people));
-  localStorage.setItem('zotnet_ints', JSON.stringify(interactions));
+  localStorage.setItem('rootstock_people', JSON.stringify(people));
+  localStorage.setItem('rootstock_ints', JSON.stringify(interactions));
 }
-
 function loadData() {
-  const p = localStorage.getItem('zotnet_people');
-  const i = localStorage.getItem('zotnet_ints');
+  const p = localStorage.getItem('rootstock_people');
+  const i = localStorage.getItem('rootstock_ints');
   if (p) people = JSON.parse(p);
   if (i) interactions = JSON.parse(i);
 }
+loadData();
 
-loadData(); // runs on every page load
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function colorClass(idx) { return 'c'+(idx%8); }
+function today() { return new Date().toISOString().split('T')[0]; }
 
-// ========================
-// HELPERS
-// ========================
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-function initials(name) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
-function colorClass(idx) {
-  return 'c' + (idx % 8);
+function formatDate(d) {
+  if (!d) return '';
+  const date = new Date(d + 'T00:00:00');
+  return date.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
 }
 
 function timeAgo(d) {
-  const diff = Date.now() - new Date(d).getTime();
-  const days = Math.floor(diff / 86400000);
+  const diff = Date.now() - new Date(d+'T00:00:00').getTime();
+  const days = Math.floor(diff/86400000);
   if (days === 0) return 'Today';
   if (days === 1) return 'Yesterday';
-  if (days < 7) return days + 'd ago';
-  if (days < 30) return Math.floor(days / 7) + 'w ago';
-  if (days < 365) return Math.floor(days / 30) + 'mo ago';
-  return Math.floor(days / 365) + 'y ago';
+  if (days < 7) return days+'d ago';
+  if (days < 30) return Math.floor(days/7)+'w ago';
+  if (days < 365) return Math.floor(days/30)+'mo ago';
+  return Math.floor(days/365)+'y ago';
 }
 
 function sentimentClass(s) {
@@ -818,362 +390,286 @@ function sentimentClass(s) {
   if (s === 'Follow-up needed') return 'sf';
   return 'sn';
 }
-
-function today() {
-  return new Date().toISOString().split('T')[0];
+function tlClass(s) {
+  if (s === 'Positive') return 'positive';
+  if (s === 'Follow-up needed') return 'followup';
+  return 'neutral';
 }
 
-// ========================
-// NAVIGATION
-// ========================
 function navigate(view, el) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
-  document.getElementById('view-' + view).classList.remove('hidden');
-  if (view === 'dashboard') renderDashboard();
-  if (view === 'people') renderPeople();
-  if (view === 'interactions') renderAllInteractions();
-  if (view === 'guide') renderGuide();
+  document.querySelectorAll('[id^="view-"]').forEach(v=>v.classList.add('hidden'));
+  document.getElementById('view-'+view).classList.remove('hidden');
+  if (view==='dashboard') renderDashboard();
+  if (view==='people') renderPeople();
+  if (view==='interactions') renderAllInteractions();
+  if (view==='guide') renderGuide();
 }
-
-// ========================
-// MODAL HELPERS
-// ========================
 function cm(id) { document.getElementById(id).classList.add('hidden'); }
 function om(id) { document.getElementById(id).classList.remove('hidden'); }
 
-// ========================
-// DASHBOARD
-// ========================
 function renderDashboard() {
   document.getElementById('s-total').textContent = people.length;
   document.getElementById('s-ints').textContent = interactions.length;
-  const fu = interactions.filter(i => i.sentiment === 'Follow-up needed').length;
-  document.getElementById('s-fu').textContent = fu;
-  const cats = [...new Set(people.map(p => p.category).filter(Boolean))].length;
-  document.getElementById('s-cats').textContent = cats;
+  document.getElementById('s-fu').textContent = interactions.filter(i=>i.sentiment==='Follow-up needed').length;
+  document.getElementById('s-cats').textContent = [...new Set(people.map(p=>p.category).filter(Boolean))].length;
 
-  // Recent activity
   const act = document.getElementById('d-activity');
-  const recent = [...interactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
-  if (recent.length === 0) {
-    act.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Log your first interaction to see activity here.</p></div>';
+  const recent = [...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  if (recent.length===0) {
+    act.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Log your first interaction to see activity here.</p></div>';
   } else {
-    act.innerHTML = recent.map(i => {
-      const person = people.find(p => p.id === i.personId);
-      const pname = person ? person.name : 'Unknown';
-      const note = i.notes ? ': ' + i.notes.slice(0, 60) + (i.notes.length > 60 ? '…' : '') : '';
-      return `<div class="act-item">
-        <div class="act-dot"></div>
-        <div>
-          <div class="act-text"><strong>${pname}</strong> — ${i.type}${note}</div>
-          <div class="act-time">${timeAgo(i.date)}</div>
-        </div>
-      </div>`;
+    act.innerHTML=recent.map(i=>{
+      const person=people.find(p=>p.id===i.personId);
+      const note=i.notes?': '+i.notes.slice(0,55)+(i.notes.length>55?'…':''):'';
+      return `<div class="act-item"><div class="act-dot"></div><div>
+        <div class="act-text"><strong>${person?person.name:'Unknown'}</strong> — ${i.type}${note}</div>
+        <div class="act-time">${formatDate(i.date)} · ${timeAgo(i.date)}</div>
+      </div></div>`;
     }).join('');
   }
 
-  // Category bars
-  const catEl = document.getElementById('d-cats');
-  const catCounts = {};
-  people.forEach(p => { if (p.category) catCounts[p.category] = (catCounts[p.category] || 0) + 1; });
-  const catEntries = Object.entries(catCounts).sort((a, b) => b[1] - a[1]);
-  if (catEntries.length === 0) {
-    catEl.innerHTML = '<p style="font-size:12px;color:#9ca3af">No data yet.</p>';
-  } else {
-    const max = catEntries[0][1];
-    catEl.innerHTML = catEntries.map(([cat, cnt]) => `
-      <div class="bar-item">
-        <div class="bar-label">${cat}</div>
-        <div class="bar-cont"><div class="bar-fill" style="width:${Math.round((cnt/max)*100)}%"></div></div>
-        <div class="bar-cnt">${cnt}</div>
-      </div>`).join('');
+  const catEl=document.getElementById('d-cats');
+  const catCounts={};
+  people.forEach(p=>{if(p.category) catCounts[p.category]=(catCounts[p.category]||0)+1;});
+  const catEntries=Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
+  if(catEntries.length===0){catEl.innerHTML='<p style="font-size:12px;color:#9ca3af">No data yet.</p>';}
+  else{
+    const max=catEntries[0][1];
+    catEl.innerHTML=catEntries.map(([cat,cnt])=>`<div class="bar-item"><div class="bar-label">${cat}</div><div class="bar-cont"><div class="bar-fill" style="width:${Math.round((cnt/max)*100)}%"></div></div><div class="bar-cnt">${cnt}</div></div>`).join('');
   }
 
-  // Reconnect (people with no interaction in 30+ days or never)
-  const reconEl = document.getElementById('d-reconnect');
-  const needRecon = people.filter(p => {
-    const ints = interactions.filter(i => i.personId === p.id);
-    if (ints.length === 0) return true;
-    const last = Math.max(...ints.map(i => new Date(i.date).getTime()));
-    return (Date.now() - last) > 30 * 86400000;
-  }).slice(0, 5);
-  if (needRecon.length === 0) {
-    reconEl.innerHTML = '<p style="font-size:12px;color:#9ca3af">You\'re all caught up!</p>';
-  } else {
-    reconEl.innerHTML = needRecon.map((p, idx) => `
-      <div class="ritem" onclick="openDetail('${p.id}')">
-        <div class="avatar ${colorClass(idx)}" style="width:32px;height:32px;font-size:12px;border-radius:8px">${initials(p.name)}</div>
-        <div>
-          <div style="font-size:13px;font-weight:600">${p.name}</div>
-          <div style="font-size:11px;color:#9ca3af">${p.role || p.category || ''}</div>
-        </div>
-      </div>`).join('');
+  const reconEl=document.getElementById('d-reconnect');
+  const needRecon=people.filter(p=>{
+    const ints=interactions.filter(i=>i.personId===p.id);
+    if(ints.length===0) return true;
+    const last=Math.max(...ints.map(i=>new Date(i.date+'T00:00:00').getTime()));
+    return (Date.now()-last)>30*86400000;
+  }).slice(0,5);
+  if(needRecon.length===0){reconEl.innerHTML='<p style="font-size:12px;color:#9ca3af">You\'re all caught up!</p>';}
+  else{
+    reconEl.innerHTML=needRecon.map((p,idx)=>`<div class="ritem" onclick="openDetail('${p.id}')"><div class="avatar ${colorClass(idx)}" style="width:32px;height:32px;font-size:12px;border-radius:8px">${initials(p.name)}</div><div><div style="font-size:13px;font-weight:600">${p.name}</div><div style="font-size:11px;color:#9ca3af">${p.role||p.category||''}</div></div></div>`).join('');
   }
 }
 
-// ========================
-// PEOPLE
-// ========================
 function renderPeople() {
-  const q = (document.getElementById('psearch').value || '').toLowerCase();
-  const fc = document.getElementById('fcat').value;
-  const fm = document.getElementById('fmbti').value;
-
-  let filtered = people.filter(p => {
-    const matchQ = !q ||
-      p.name.toLowerCase().includes(q) ||
-      (p.role || '').toLowerCase().includes(q) ||
-      (p.company || '').toLowerCase().includes(q) ||
-      (p.tags || '').toLowerCase().includes(q);
-    const matchC = !fc || p.category === fc;
-    const matchM = !fm || p.mbti === fm;
-    return matchQ && matchC && matchM;
+  const q=(document.getElementById('psearch').value||'').toLowerCase();
+  const fc=document.getElementById('fcat').value;
+  const fm=document.getElementById('fmbti').value;
+  let filtered=people.filter(p=>{
+    const matchQ=!q||p.name.toLowerCase().includes(q)||(p.role||'').toLowerCase().includes(q)||(p.company||'').toLowerCase().includes(q)||(p.tags||'').toLowerCase().includes(q);
+    return matchQ&&(!fc||p.category===fc)&&(!fm||p.mbti===fm);
   });
-
-  const grid = document.getElementById('pgrid');
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👥</div><h3>No people found</h3><p>Add someone or adjust your filters.</p></div>';
-    return;
-  }
-
-  grid.innerHTML = filtered.map((p, idx) => {
-    const pInts = interactions.filter(i => i.personId === p.id);
-    const lastInt = pInts.length > 0
-      ? timeAgo(Math.max(...pInts.map(i => new Date(i.date).getTime())))
-      : 'Never';
-    const tags = p.tags ? p.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const grid=document.getElementById('pgrid');
+  if(filtered.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👥</div><h3>No people found</h3><p>Add someone or adjust your filters.</p></div>';return;}
+  grid.innerHTML=filtered.map((p,idx)=>{
+    const pInts=interactions.filter(i=>i.personId===p.id);
+    const lastInt=pInts.length>0?formatDate(pInts.sort((a,b)=>new Date(b.date)-new Date(a.date))[0].date):'Never';
+    const tags=p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):[];
     return `<div class="person-card" onclick="openDetail('${p.id}')">
-      <div class="pcard-header">
-        <div class="avatar ${colorClass(idx)}">${initials(p.name)}</div>
-        <div>
-          <div class="pname">${p.name}</div>
-          <div class="prole">${[p.role, p.company].filter(Boolean).join(' · ') || 'No title'}</div>
-        </div>
-      </div>
-      <div class="badges">
-        ${p.category ? `<span class="badge bm">${p.category}</span>` : ''}
-        ${p.mbti ? `<span class="badge bd">${p.mbti}</span>` : ''}
-        ${p.disc ? `<span class="badge bc">${p.disc}</span>` : ''}
-        ${tags.slice(0,2).map(t => `<span class="badge be">${t}</span>`).join('')}
-      </div>
-      ${p.purpose ? `<div class="ppurpose">${p.purpose.slice(0, 90)}${p.purpose.length > 90 ? '…' : ''}</div>` : ''}
-      <div class="pfoot">
-        <span>Last contact: ${lastInt}</span>
-        <span>${pInts.length} interaction${pInts.length !== 1 ? 's' : ''}</span>
-      </div>
+      <div class="pcard-header"><div class="avatar ${colorClass(idx)}">${initials(p.name)}</div><div><div class="pname">${p.name}</div><div class="prole">${[p.role,p.company].filter(Boolean).join(' · ')||'No title'}</div></div></div>
+      <div class="badges">${p.category?`<span class="badge bm">${p.category}</span>`:''} ${p.mbti?`<span class="badge bd">${p.mbti}</span>`:''} ${p.disc?`<span class="badge bc">${p.disc}</span>`:''} ${tags.slice(0,2).map(t=>`<span class="badge be">${t}</span>`).join('')}</div>
+      ${p.purpose?`<div class="ppurpose">${p.purpose.slice(0,90)}${p.purpose.length>90?'…':''}</div>`:''}
+      <div class="pfoot"><span>Last contact: ${lastInt}</span><span>${pInts.length} interaction${pInts.length!==1?'s':''}</span></div>
     </div>`;
   }).join('');
 }
 
-// ========================
-// ADD / EDIT PERSON
-// ========================
 function openAddPerson() {
-  document.getElementById('mp-title').textContent = 'Add Person';
-  document.getElementById('p-id').value = '';
-  ['p-name','p-company','p-role','p-email','p-tags','p-notes','p-purpose','p-comm'].forEach(id => document.getElementById(id).value = '');
-  ['p-cat','p-mbti','p-disc','p-enn'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mp-title').textContent='Add Person';
+  document.getElementById('p-id').value='';
+  ['p-name','p-company','p-role','p-email','p-tags','p-notes','p-purpose','p-comm'].forEach(id=>document.getElementById(id).value='');
+  ['p-cat','p-mbti','p-disc','p-enn'].forEach(id=>document.getElementById(id).value='');
   om('m-person');
 }
 
 function openEditPerson(id) {
-  const p = people.find(x => x.id === id);
-  if (!p) return;
-  document.getElementById('mp-title').textContent = 'Edit Person';
-  document.getElementById('p-id').value = p.id;
-  document.getElementById('p-name').value = p.name || '';
-  document.getElementById('p-company').value = p.company || '';
-  document.getElementById('p-role').value = p.role || '';
-  document.getElementById('p-email').value = p.email || '';
-  document.getElementById('p-cat').value = p.category || '';
-  document.getElementById('p-mbti').value = p.mbti || '';
-  document.getElementById('p-disc').value = p.disc || '';
-  document.getElementById('p-enn').value = p.enneagram || '';
-  document.getElementById('p-purpose').value = p.purpose || '';
-  document.getElementById('p-comm').value = p.comm || '';
-  document.getElementById('p-tags').value = p.tags || '';
-  document.getElementById('p-notes').value = p.notes || '';
+  const p=people.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('mp-title').textContent='Edit Person';
+  document.getElementById('p-id').value=p.id;
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-company').value=p.company||'';
+  document.getElementById('p-role').value=p.role||'';
+  document.getElementById('p-email').value=p.email||'';
+  document.getElementById('p-cat').value=p.category||'';
+  document.getElementById('p-mbti').value=p.mbti||'';
+  document.getElementById('p-disc').value=p.disc||'';
+  document.getElementById('p-enn').value=p.enneagram||'';
+  document.getElementById('p-purpose').value=p.purpose||'';
+  document.getElementById('p-comm').value=p.comm||'';
+  document.getElementById('p-tags').value=p.tags||'';
+  document.getElementById('p-notes').value=p.notes||'';
   cm('m-detail');
   om('m-person');
 }
 
 function savePerson() {
-  const name = document.getElementById('p-name').value.trim();
-  if (!name) { alert('Full name is required.'); return; }
-  const id = document.getElementById('p-id').value || uid();
-  const existing = people.findIndex(p => p.id === id);
-  const person = {
-    id, name,
-    company: document.getElementById('p-company').value.trim(),
-    role: document.getElementById('p-role').value.trim(),
-    email: document.getElementById('p-email').value.trim(),
-    category: document.getElementById('p-cat').value,
-    mbti: document.getElementById('p-mbti').value,
-    disc: document.getElementById('p-disc').value,
-    enneagram: document.getElementById('p-enn').value,
-    purpose: document.getElementById('p-purpose').value.trim(),
-    comm: document.getElementById('p-comm').value.trim(),
-    tags: document.getElementById('p-tags').value.trim(),
-    notes: document.getElementById('p-notes').value.trim(),
-    created: existing >= 0 ? people[existing].created : new Date().toISOString()
+  const name=document.getElementById('p-name').value.trim();
+  if(!name){alert('Full name is required.');return;}
+  const id=document.getElementById('p-id').value||uid();
+  const existing=people.findIndex(p=>p.id===id);
+  const person={
+    id,name,
+    company:document.getElementById('p-company').value.trim(),
+    role:document.getElementById('p-role').value.trim(),
+    email:document.getElementById('p-email').value.trim(),
+    category:document.getElementById('p-cat').value,
+    mbti:document.getElementById('p-mbti').value,
+    disc:document.getElementById('p-disc').value,
+    enneagram:document.getElementById('p-enn').value,
+    purpose:document.getElementById('p-purpose').value.trim(),
+    comm:document.getElementById('p-comm').value.trim(),
+    tags:document.getElementById('p-tags').value.trim(),
+    notes:document.getElementById('p-notes').value.trim(),
+    created:existing>=0?people[existing].created:new Date().toISOString()
   };
-  if (existing >= 0) {
-    people[existing] = person;
-  } else {
-    people.push(person);
-  }
-  saveData(); // PHASE 1: persist
+  if(existing>=0){people[existing]=person;}else{people.push(person);}
+  saveData();
   cm('m-person');
   renderPeople();
   renderDashboard();
 }
 
 function deletePerson(id) {
-  if (!confirm('Delete this person and all their interactions?')) return;
-  people = people.filter(p => p.id !== id);
-  interactions = interactions.filter(i => i.personId !== id);
-  saveData(); // PHASE 1: persist
+  if(!confirm('Delete this person and all their interactions?')) return;
+  people=people.filter(p=>p.id!==id);
+  interactions=interactions.filter(i=>i.personId!==id);
+  saveData();
   cm('m-detail');
   renderPeople();
   renderDashboard();
 }
 
-// ========================
-// PERSON DETAIL
-// ========================
 function openDetail(id) {
-  const p = people.find(x => x.id === id);
-  if (!p) return;
-  const idx = people.indexOf(p);
-  const pInts = [...interactions.filter(i => i.personId === id)].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const tags = p.tags ? p.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const p=people.find(x=>x.id===id);
+  if(!p) return;
+  const idx=people.indexOf(p);
+  const pInts=[...interactions.filter(i=>i.personId===id)].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const tags=p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):[];
 
-  document.getElementById('m-detail-body').innerHTML = `
+  const timelineHTML = pInts.length===0
+    ? '<p style="font-size:12px;color:#9ca3af;padding:4px 0">No interactions logged yet. Add one below.</p>'
+    : `<div class="timeline">${pInts.map(i=>`
+        <div class="tl-item">
+          <div class="tl-dot ${tlClass(i.sentiment)}"></div>
+          <div class="tl-card ${tlClass(i.sentiment)}">
+            <div class="tl-head">
+              <span class="tl-type">${i.type}</span>
+              <span class="tl-date">📅 ${formatDate(i.date)}</span>
+            </div>
+            ${i.notes?`<div class="tl-notes">${i.notes}</div>`:''}
+            <div class="tl-foot">
+              <span class="sbadge ${sentimentClass(i.sentiment)}">${i.sentiment}</span>
+              <button class="btn btn-danger btn-sm" onclick="deleteInteraction('${i.id}','${p.id}')">Delete</button>
+            </div>
+          </div>
+        </div>`).join('')}</div>`;
+
+  document.getElementById('m-detail-body').innerHTML=`
     <div class="det-header">
       <div class="avatar av-lg ${colorClass(idx)}">${initials(p.name)}</div>
       <div class="det-info">
         <h2>${p.name}</h2>
-        <p>${[p.role, p.company].filter(Boolean).join(' · ') || 'No title'}</p>
-        ${p.email ? `<p style="margin-top:4px;color:#7c83fd">${p.email}</p>` : ''}
+        <p>${[p.role,p.company].filter(Boolean).join(' · ')||'No title'}</p>
+        ${p.email?`<p style="margin-top:4px;color:#7c83fd">${p.email}</p>`:''}
       </div>
     </div>
     <div class="badges" style="margin-bottom:16px">
-      ${p.category ? `<span class="badge bm">${p.category}</span>` : ''}
-      ${p.mbti ? `<span class="badge bd">MBTI: ${p.mbti}</span>` : ''}
-      ${p.disc ? `<span class="badge bc">DISC: ${p.disc}</span>` : ''}
-      ${p.enneagram ? `<span class="badge be">Enn: ${p.enneagram}</span>` : ''}
-      ${tags.map(t => `<span class="badge" style="background:#f3f4f6;color:#374151">${t}</span>`).join('')}
+      ${p.category?`<span class="badge bm">${p.category}</span>`:''}
+      ${p.mbti?`<span class="badge bd">MBTI: ${p.mbti}</span>`:''}
+      ${p.disc?`<span class="badge bc">DISC: ${p.disc}</span>`:''}
+      ${p.enneagram?`<span class="badge be">Enn: ${p.enneagram}</span>`:''}
+      ${tags.map(t=>`<span class="badge" style="background:#f3f4f6;color:#374151">${t}</span>`).join('')}
     </div>
-    ${p.purpose ? `<div class="dsec"><h4>Why They Matter</h4><p>${p.purpose}</p></div>` : ''}
-    ${p.comm ? `<div class="dsec"><h4>How to Engage</h4><p>${p.comm}</p></div>` : ''}
-    ${p.notes ? `<div class="dsec"><h4>Notes</h4><p>${p.notes}</p></div>` : ''}
+    ${p.purpose?`<div class="dsec"><h4>Why They Matter</h4><p>${p.purpose}</p></div>`:''}
+    ${p.comm?`<div class="dsec"><h4>How to Engage</h4><p>${p.comm}</p></div>`:''}
+    ${p.notes?`<div class="dsec"><h4>Notes</h4><p>${p.notes}</p></div>`:''}
     <div class="dsec">
-      <h4>Interactions (${pInts.length})</h4>
-      ${pInts.length === 0
-        ? '<p style="font-size:12px;color:#9ca3af">No interactions logged yet.</p>'
-        : pInts.map(i => `
-          <div class="iitem">
-            <div class="ihead">
-              <span class="itype">${i.type}</span>
-              <span class="idate">${i.date}</span>
-            </div>
-            ${i.notes ? `<div class="inotes">${i.notes}</div>` : ''}
-            <div class="ifoot">
-              <span class="sbadge ${sentimentClass(i.sentiment)}">${i.sentiment}</span>
-              <button class="btn btn-danger btn-sm" onclick="deleteInteraction('${i.id}','${p.id}')">Delete</button>
-            </div>
-          </div>`).join('')}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h4 style="margin-bottom:0">Interaction History (${pInts.length})</h4>
+        <button class="btn btn-primary btn-sm" onclick="openLogInt('${p.id}')">+ Log New Interaction</button>
+      </div>
+      ${timelineHTML}
     </div>`;
 
-  document.getElementById('m-detail-foot').innerHTML = `
-    <button class="btn btn-danger" onclick="deletePerson('${p.id}')">Delete</button>
-    <button class="btn btn-secondary" onclick="openEditPerson('${p.id}')">Edit</button>
-    <button class="btn btn-primary" onclick="openLogInt('${p.id}')">+ Log Interaction</button>`;
+  document.getElementById('m-detail-foot').innerHTML=`
+    <button class="btn btn-danger" onclick="deletePerson('${p.id}')">Delete Person</button>
+    <button class="btn btn-secondary" onclick="openEditPerson('${p.id}')">Edit Profile</button>`;
 
   om('m-detail');
 }
 
-// ========================
-// INTERACTIONS
-// ========================
 function openLogInt(personId) {
-  document.getElementById('int-id').value = '';
-  document.getElementById('int-date').value = today();
-  document.getElementById('int-notes').value = '';
-  document.getElementById('int-type').value = 'Meeting';
-  document.getElementById('int-sentiment').value = 'Positive';
-
-  const sel = document.getElementById('int-person-sel');
-  sel.innerHTML = people.map(p => `<option value="${p.id}" ${p.id === personId ? 'selected' : ''}>${p.name}</option>`).join('');
-  if (people.length === 0) {
-    alert('Add a person first before logging an interaction.');
-    return;
-  }
+  document.getElementById('int-id').value='';
+  document.getElementById('int-date').value=today();
+  document.getElementById('int-notes').value='';
+  document.getElementById('int-type').value='Meeting';
+  document.getElementById('int-sentiment').value='Positive';
+  document.getElementById('mint-title').textContent='Log Interaction';
+  const sel=document.getElementById('int-person-sel');
+  sel.innerHTML=people.map(p=>`<option value="${p.id}" ${p.id===personId?'selected':''}>${p.name}</option>`).join('');
+  if(people.length===0){alert('Add a person first before logging an interaction.');return;}
   cm('m-detail');
   om('m-int');
 }
 
 function saveInteraction() {
-  const personId = document.getElementById('int-person-sel').value;
-  if (!personId) { alert('Please select a person.'); return; }
-  const id = document.getElementById('int-id').value || uid();
-  const existing = interactions.findIndex(i => i.id === id);
-  const interaction = {
-    id,
-    personId,
-    type: document.getElementById('int-type').value,
-    date: document.getElementById('int-date').value || today(),
-    notes: document.getElementById('int-notes').value.trim(),
-    sentiment: document.getElementById('int-sentiment').value
+  const personId=document.getElementById('int-person-sel').value;
+  if(!personId){alert('Please select a person.');return;}
+  const date=document.getElementById('int-date').value;
+  if(!date){alert('Please select a date.');return;}
+  const id=document.getElementById('int-id').value||uid();
+  const existing=interactions.findIndex(i=>i.id===id);
+  const interaction={
+    id,personId,
+    type:document.getElementById('int-type').value,
+    date,
+    notes:document.getElementById('int-notes').value.trim(),
+    sentiment:document.getElementById('int-sentiment').value
   };
-  if (existing >= 0) {
-    interactions[existing] = interaction;
-  } else {
-    interactions.push(interaction);
-  }
-  saveData(); // PHASE 1: persist
+  if(existing>=0){interactions[existing]=interaction;}else{interactions.push(interaction);}
+  saveData();
+  const pid=personId;
   cm('m-int');
   renderDashboard();
   renderAllInteractions();
+  openDetail(pid);
 }
 
 function deleteInteraction(intId, personId) {
-  if (!confirm('Delete this interaction?')) return;
-  interactions = interactions.filter(i => i.id !== intId);
-  saveData(); // PHASE 1: persist
+  if(!confirm('Delete this interaction?')) return;
+  interactions=interactions.filter(i=>i.id!==intId);
+  saveData();
   cm('m-detail');
   openDetail(personId);
   renderDashboard();
 }
 
 function renderAllInteractions() {
-  const el = document.getElementById('all-ints');
-  if (interactions.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Click + Log Interaction to get started.</p></div>';
+  const el=document.getElementById('all-ints');
+  if(interactions.length===0){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Click + Log Interaction to get started.</p></div>';
     return;
   }
-  const sorted = [...interactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-  el.innerHTML = sorted.map(i => {
-    const person = people.find(p => p.id === i.personId);
+  el.innerHTML=[...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(i=>{
+    const person=people.find(p=>p.id===i.personId);
     return `<div class="iitem">
       <div class="ihead">
-        <span class="itype">${person ? person.name : 'Unknown'} — ${i.type}</span>
-        <span class="idate">${i.date}</span>
+        <span class="itype">${person?person.name:'Unknown'} — ${i.type}</span>
+        <span class="idate">📅 ${formatDate(i.date)}</span>
       </div>
-      ${i.notes ? `<div class="inotes">${i.notes}</div>` : ''}
+      ${i.notes?`<div class="inotes">${i.notes}</div>`:''}
       <div class="ifoot">
         <span class="sbadge ${sentimentClass(i.sentiment)}">${i.sentiment}</span>
+        <span style="font-size:11px;color:#9ca3af">${timeAgo(i.date)}</span>
       </div>
     </div>`;
   }).join('');
 }
 
-// ========================
-// PERSONALITY GUIDE
-// ========================
-const mbtiData = [
+const mbtiData=[
   {type:'INTJ',name:'Architect',desc:'Strategic, independent, high standards. Driven by long-term vision.',tip:'Speak in logic and frameworks. Skip small talk.'},
   {type:'INTP',name:'Thinker',desc:'Analytical, curious, loves complex problems. Dislikes rigid rules.',tip:'Engage with ideas. Let them explore before deciding.'},
   {type:'ENTJ',name:'Commander',desc:'Bold, decisive, natural leader. Focused on efficiency and results.',tip:'Be direct and competent. Show ROI quickly.'},
@@ -1191,8 +687,7 @@ const mbtiData = [
   {type:'ESTP',name:'Entrepreneur',desc:'Energetic, observant, thrives in fast-paced environments.',tip:'Keep it practical and action-oriented. No long theory.'},
   {type:'ESFP',name:'Entertainer',desc:'Spontaneous, fun, loves people and experiences.',tip:'Make it fun and personal. They respond to enthusiasm.'}
 ];
-
-const discData = [
+const discData=[
   {type:'D — Dominant',desc:'Direct, results-driven, competitive. Wants to win and lead.',tip:'Be brief and confident. Lead with results, not process.'},
   {type:'I — Influential',desc:'Enthusiastic, social, optimistic. Loves recognition and collaboration.',tip:'Be warm and expressive. Share stories and celebrate wins.'},
   {type:'S — Steady',desc:'Patient, reliable, team-oriented. Dislikes sudden change.',tip:'Be calm, consistent, and give them time to process.'},
@@ -1200,57 +695,21 @@ const discData = [
 ];
 
 function renderGuide() {
-  const mbtiEl = document.getElementById('g-mbti');
-  mbtiEl.innerHTML = mbtiData.map(m => `
-    <div class="pcard">
-      <h4>${m.type} — ${m.name}</h4>
-      <p>${m.desc}</p>
-      <p class="tip">💡 ${m.tip}</p>
-    </div>`).join('');
-
-  const discEl = document.getElementById('g-disc');
-  discEl.innerHTML = discData.map(d => `
-    <div class="pcard">
-      <h4>${d.type}</h4>
-      <p>${d.desc}</p>
-      <p class="tip">💡 ${d.tip}</p>
-    </div>`).join('');
-
-  const tipsEl = document.getElementById('g-tips');
-  tipsEl.innerHTML = `
-    <div class="section">
-      <div class="section-title" style="margin-bottom:14px">How to Identify Personality Types</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
-        <div class="pcard"><h4>Introvert vs Extrovert</h4><p>Extroverts think out loud, speak first, gain energy from people. Introverts pause before speaking, prefer 1:1 over groups, need quiet to recharge.</p></div>
-        <div class="pcard"><h4>Thinker vs Feeler</h4><p>Thinkers use bullet points, stay objective, ask "does this make sense?" Feelers use personal language, care about impact on people, ask "does this feel right?"</p></div>
-        <div class="pcard"><h4>Judger vs Perceiver</h4><p>Judgers are scheduled, decisive, and closure-seeking. Perceivers are flexible, spontaneous, and keep options open.</p></div>
-        <div class="pcard"><h4>Sensor vs Intuitive</h4><p>Sensors focus on facts, details, and what is proven. Intuitives focus on patterns, possibilities, and what could be.</p></div>
-        <div class="pcard"><h4>Under Stress</h4><p>INTJs withdraw. ENFPs scatter. ISTJs over-control. ENTJs become harsh. Watch for stress behavior — it reveals true type.</p></div>
-        <div class="pcard"><h4>What They Value</h4><p>NTs value competence. NFs value authenticity. SJs value reliability. SPs value freedom and action. Lead with what they care about.</p></div>
-      </div>
-    </div>`;
+  document.getElementById('g-mbti').innerHTML=mbtiData.map(m=>`<div class="pcard"><h4>${m.type} — ${m.name}</h4><p>${m.desc}</p><p class="tip">💡 ${m.tip}</p></div>`).join('');
+  document.getElementById('g-disc').innerHTML=discData.map(d=>`<div class="pcard"><h4>${d.type}</h4><p>${d.desc}</p><p class="tip">💡 ${d.tip}</p></div>`).join('');
+  document.getElementById('g-tips').innerHTML=`<div class="section"><div class="section-title" style="margin-bottom:14px">How to Identify Personality Types</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"><div class="pcard"><h4>Introvert vs Extrovert</h4><p>Extroverts think out loud and gain energy from people. Introverts pause before speaking and need quiet to recharge.</p></div><div class="pcard"><h4>Thinker vs Feeler</h4><p>Thinkers stay objective and ask "does this make sense?" Feelers care about impact on people and ask "does this feel right?"</p></div><div class="pcard"><h4>Judger vs Perceiver</h4><p>Judgers are scheduled and closure-seeking. Perceivers are flexible and keep options open.</p></div><div class="pcard"><h4>Sensor vs Intuitive</h4><p>Sensors focus on facts and what is proven. Intuitives focus on patterns and what could be.</p></div><div class="pcard"><h4>Under Stress</h4><p>INTJs withdraw. ENFPs scatter. ISTJs over-control. ENTJs become harsh. Stress reveals true type.</p></div><div class="pcard"><h4>What They Value</h4><p>NTs value competence. NFs value authenticity. SJs value reliability. SPs value freedom and action.</p></div></div></div>`;
 }
 
 function switchTab(tab, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('g-mbti').classList.add('hidden');
-  document.getElementById('g-disc').classList.add('hidden');
-  document.getElementById('g-tips').classList.add('hidden');
-  document.getElementById('g-' + tab).classList.remove('hidden');
+  ['g-mbti','g-disc','g-tips'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('g-'+tab).classList.remove('hidden');
 }
 
-// ========================
-// INIT
-// ========================
 renderDashboard();
 
-// ========================
-// SERVICE WORKER (PWA)
-// ========================
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
 </script>
 </body>
 </html>
