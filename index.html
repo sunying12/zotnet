@@ -4,8 +4,21 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Rootstock 🌱 Personal Network Manager</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!--
+  ============================================================
+  FIREBASE HOSTING AUTO-CONFIG
+  ✅ No API key hardcoded here.
+  ✅ Firebase Hosting injects your config automatically via
+     /__/firebase/init.js when deployed to Firebase Hosting.
+  ✅ Run: firebase deploy
+     Then visit: rootstock-ba97d.web.app
+  ============================================================
+-->
+<script src="/__/firebase/9.23.0/firebase-app-compat.js"></script>
+<script src="/__/firebase/9.23.0/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;}
@@ -72,7 +85,7 @@ h1{font-size:1.5rem;margin-bottom:20px;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
 .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#718096;}
 
-/* CLOUD */
+/* CLOUD TOAST */
 #cloudStatus{position:fixed;bottom:20px;right:20px;background:#2d3748;color:white;padding:8px 16px;border-radius:20px;font-size:0.8rem;opacity:0;transition:opacity 0.3s;z-index:2000;}
 #cloudStatus.show{opacity:1;}
 
@@ -173,7 +186,7 @@ h1{font-size:1.5rem;margin-bottom:20px;}
     </div>
     <div id="peopleGrid"></div>
 
-    <!-- TRASH SECTION (toggled) -->
+    <!-- TRASH SECTION -->
     <div id="trashSection" style="display:none;margin-top:32px;">
       <hr style="margin-bottom:20px;border-color:#e2e8f0;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -226,10 +239,10 @@ h1{font-size:1.5rem;margin-bottom:20px;}
 
 </main>
 
-<!-- CLOUD STATUS TOAST -->
+<!-- CLOUD TOAST -->
 <div id="cloudStatus">☁️ Saved to cloud</div>
 
-<!-- ══════════════════ MODALS ══════════════════ -->
+<!-- ══ MODALS ══ -->
 
 <!-- Add / Edit Person -->
 <div class="modal-overlay" id="personModal">
@@ -328,23 +341,16 @@ h1{font-size:1.5rem;margin-bottom:20px;}
   </div>
 </div>
 
-<!-- ══════════════════ SCRIPTS ══════════════════ -->
+<!-- ══ SCRIPTS ══ -->
 <script>
 // ============================================================
-//  FIREBASE CONFIGURATION
-//  ⚠️  API key is set. Fill in the remaining values from:
-//  Firebase Console → Project Settings → Your apps → Config
+//  FIREBASE
+//  ✅ Config is injected automatically by Firebase Hosting
+//     via /__/firebase/init.js — NO API KEY IN THIS FILE.
+//  ⚠️  This file only works when deployed to Firebase Hosting.
+//     To deploy: firebase deploy
+//     Local testing: firebase emulators:start
 // ============================================================
-const firebaseConfig = {
-  apiKey:            "AIzaSyAD0MCUR9LHEAdym-0PO-UC9WaSatIjqE4",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",   // 🔧 Replace
-  projectId:         "YOUR_PROJECT_ID",                   // 🔧 Replace
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",       // 🔧 Replace
-  messagingSenderId: "YOUR_SENDER_ID",                    // 🔧 Replace
-  appId:             "YOUR_APP_ID"                        // 🔧 Replace
-};
-
-firebase.initializeApp(firebaseConfig);
 const db        = firebase.firestore();
 const peopleRef = db.collection('people');
 
@@ -377,7 +383,6 @@ async function renderPeople() {
   const grid = document.getElementById('peopleGrid');
   grid.innerHTML = '<p style="color:#718096;">Loading…</p>';
   try {
-    // When loading people, exclude deleted ones:
     const snapshot = await peopleRef.where('deleted', '!=', true).get();
     let people = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -505,17 +510,16 @@ async function openEditPerson(id, p) {
 function closeProfileModal() { document.getElementById('profileModal').classList.remove('open'); }
 
 // ============================================================
-//  SOFT DELETE — move to trash (NEW — replaces hard delete)
+//  SOFT DELETE — move to trash
 // ============================================================
 async function deletePerson(id) {
   if (!confirm('Move this contact to trash?')) return;
-  // NEW (soft delete — move to trash):
   await peopleRef.doc(id).update({
     deleted:   true,
     deletedAt: firebase.firestore.FieldValue.serverTimestamp()
   });
   closeProfileModal();
-  renderPeople();    // refresh the list
+  renderPeople();
   loadDashboard();
   showCloudSaved();
 }
@@ -545,9 +549,8 @@ async function showTrash() {
       ? Math.max(0, 30 - Math.floor((now - deletedAt.getTime()) / 86400000))
       : '?';
 
-    // Auto-purge if over 30 days
     if (deletedAt && (now - deletedAt.getTime()) > THIRTY_DAYS_MS) {
-      await peopleRef.doc(doc.id).delete(); // permanent delete
+      await peopleRef.doc(doc.id).delete();
       continue;
     }
 
@@ -692,7 +695,6 @@ async function loadDashboard() {
     document.getElementById('stat-int').textContent = intSnap.size;
     document.getElementById('stat-followup').textContent = intSnap.docs.filter(d=>d.data().sentiment==='followup').length;
 
-    // Category chart
     const catMap = {};
     peopleSnap.forEach(d => { const c=d.data().category||'Other'; catMap[c]=(catMap[c]||0)+1; });
     const mx = Math.max(...Object.values(catMap),1);
@@ -701,14 +703,12 @@ async function loadDashboard() {
       .map(([c,n])=>`<div class="cat-bar"><div class="cat-bar-label">${c}</div><div class="cat-bar-fill" style="width:${(n/mx)*120}px;"></div><div class="cat-bar-count">${n}</div></div>`)
       .join('') || '<p style="color:#718096;font-size:0.84rem;">No data yet.</p>';
 
-    // Recent activity
     const recSnap = await db.collection('interactions').orderBy('createdAt','desc').limit(5).get();
     document.getElementById('recentActivity').innerHTML = recSnap.docs.map(d=>{
       const i=d.data();
       return `<div class="rc-item"><span>${i.personName||'Unknown'} — ${i.type}</span><span style="color:#718096;">${i.date||''}</span></div>`;
     }).join('') || '<p style="color:#718096;font-size:0.84rem;">No recent activity.</p>';
 
-    // Reconnect soon
     const cut = new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
     const reconnect = peopleSnap.docs.map(d=>({id:d.id,...d.data()}))
       .filter(p=>!p.lastContact||p.lastContact<cut).slice(0,5);
@@ -725,7 +725,6 @@ async function loadDashboard() {
 // ============================================================
 async function exportCSV() {
   try {
-    // --- Export People ---
     const peopleSnap = await peopleRef.where('deleted', '!=', true).get();
     let peopleCsv = 'Name,Company,Role,Email,Category,MBTI,DISC,Enneagram,Tags,Notes\n';
     peopleSnap.forEach(doc => {
@@ -743,9 +742,8 @@ async function exportCSV() {
         `"${p.notes       || ''}"`
       ].join(',') + '\n';
     });
-    downloadCSV(peopleCsv, 'zotnet_people.csv');
+    downloadCSV(peopleCsv, 'rootstock_people.csv');
 
-    // --- Export Interactions ---
     const interactionsSnap = await db.collection('interactions').get();
     let interactionsCsv = 'Person,Type,Date,Notes,Sentiment\n';
     interactionsSnap.forEach(doc => {
@@ -758,7 +756,7 @@ async function exportCSV() {
         `"${i.sentiment  || ''}"`
       ].join(',') + '\n';
     });
-    downloadCSV(interactionsCsv, 'zotnet_interactions.csv');
+    downloadCSV(interactionsCsv, 'rootstock_interactions.csv');
   } catch(e) { alert('Export error: ' + e.message); }
 }
 
@@ -804,7 +802,7 @@ function switchGuide(tab, el) {
 // ============================================================
 //  STARTUP
 // ============================================================
-autoCleanTrash();   // clean up expired trash on every load
+autoCleanTrash();
 loadDashboard();
 showSection('dashboard');
 </script>
