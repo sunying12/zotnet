@@ -950,7 +950,7 @@ function renderDashboard() {
     const lastDate = pi.length ? Math.max(...pi.map(i=>new Date(i.date).getTime())) : p.createdAt;
     const daysSince = Math.floor((Date.now()-lastDate)/86400000);
     return { ...p, daysSince };
-  }).filter(p=>p.daysSince>=14).sort((a,b)=>b.daysSince-a.daysSince).slice(0,5);
+  }).filter(p=>p.daysSince>=30).sort((a,b)=>b.daysSince-a.daysSince).slice(0,5);
   const rcEl = document.getElementById('dash-reconnect');
   rcEl.innerHTML = rcList.length ? rcList.map(p=>
     `<div class="reconnect-item"><span>${esc(p.name)}</span><span style="font-size:0.76rem;color:#e67e22;">${p.daysSince}d ago</span></div>`
