@@ -377,6 +377,20 @@ const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 function save() {
   const now = Date.now();
   trash = trash.filter(p => (now - p.deletedAt) < THIRTY_DAYS); // auto-purge expired
+  const trashedIds = new Set(trash.map(p => p.id));
+
+  // Safety migration: if an older version left interactions active for a contact now in Trash,
+  // attach those notes to the trash record and remove them from the active interaction list.
+  if (trashedIds.size) {
+    trash = trash.map(p => {
+      const already = p.trashedInteractions || [];
+      const alreadyIds = new Set(already.map(i => i.id));
+      const newlyTrashed = interactions.filter(i => i.personId === p.id && !alreadyIds.has(i.id));
+      return newlyTrashed.length ? { ...p, trashedInteractions: [...already, ...newlyTrashed] } : p;
+    });
+    interactions = interactions.filter(i => !trashedIds.has(i.personId));
+  }
+
   localStorage.setItem('rs_people',       JSON.stringify(people));
   localStorage.setItem('rs_interactions', JSON.stringify(interactions));
   localStorage.setItem('rs_trash',        JSON.stringify(trash));
@@ -507,10 +521,21 @@ function editPerson(id) {
 // ✅ Soft delete → moves to trash instead of permanent delete
 function softDeletePerson(id) {
   const p = people.find(x => x.id === id); if (!p) return;
-  if (!confirm(`Move "${p.name}" to Trash?\n\nThey'll be permanently deleted after 30 days, but you can restore them before then.`)) return;
-  trash.push({ ...p, deletedAt: Date.now() });
+  const linkedInteractions = interactions.filter(i => i.personId === id);
+  const noteText = linkedInteractions.length
+    ? `\n\nThis will also move ${linkedInteractions.length} linked interaction/note${linkedInteractions.length !== 1 ? 's' : ''} into Trash with this person. Restoring the person will restore those notes.`
+    : '';
+  if (!confirm(`Move "${p.name}" to Trash?\n\nThey'll be permanently deleted after 30 days, but you can restore them before then.${noteText}`)) return;
+
+  trash.push({ ...p, deletedAt: Date.now(), trashedInteractions: linkedInteractions });
   people = people.filter(x => x.id !== id);
-  save(); closeModal('modal-profile'); renderPeople(); renderDashboard();
+  interactions = interactions.filter(i => i.personId !== id);
+
+  save();
+  closeModal('modal-profile');
+  renderPeople();
+  renderInteractions();
+  renderDashboard();
 }
 
 function renderPeople() {
@@ -869,6 +894,7 @@ function renderTrash() {
         <div class="trash-info">
           <h4>${esc(p.name)}</h4>
           <div class="sub">${[p.role,p.company].filter(Boolean).map(esc).join(' · ') || '—'}</div>
+          ${(p.trashedInteractions||[]).length ? `<div class="sub">💬 ${(p.trashedInteractions||[]).length} linked interaction/note${(p.trashedInteractions||[]).length!==1?'s':''} saved with this contact</div>` : ''}
           <div class="del-label${urgent?' urgent':''}">Deleted ${deletedDate} · Purges in <strong>${daysLeft} day${daysLeft!==1?'s':''}</strong>${urgent?' ⚠️':''}</div>
         </div>
         <div class="trash-actions">
@@ -881,20 +907,37 @@ function renderTrash() {
 
 function restorePerson(id) {
   const idx = trash.findIndex(p => p.id === id); if (idx===-1) return;
-  const p   = { ...trash[idx] };
+  const trashedRecord = trash[idx];
+  const restoredInteractions = (trashedRecord.trashedInteractions || []).map(i => ({
+    ...i,
+    personId: trashedRecord.id,
+    personName: trashedRecord.name
+  }));
+  const p = { ...trashedRecord };
   const collision = people.find(x => x.name.trim().toLowerCase() === p.name.trim().toLowerCase());
   if (collision) { alert(`⚠️ Cannot restore "${p.name}" — an active contact with this name already exists.\n\nRename the existing contact first, then try restoring.`); return; }
+
   delete p.deletedAt;
-  people.push(p); trash.splice(idx,1);
-  save(); renderTrash(); renderDashboard(); renderPeople();
-  alert(`✅ "${p.name}" restored to your contacts.`);
+  delete p.trashedInteractions;
+
+  people.push(p);
+  const existingInteractionIds = new Set(interactions.map(i => i.id));
+  interactions.push(...restoredInteractions.filter(i => !existingInteractionIds.has(i.id)));
+  trash.splice(idx,1);
+
+  save();
+  renderTrash();
+  renderDashboard();
+  renderPeople();
+  renderInteractions();
+  alert(`✅ "${p.name}" restored to your contacts${restoredInteractions.length ? ` with ${restoredInteractions.length} interaction/note${restoredInteractions.length!==1?'s':''}.` : '.'}`);
 }
 
 function permanentDelete(id) {
   const p = trash.find(x=>x.id===id); if(!p) return;
   if (confirm(`Permanently delete "${p.name}"?
 
-This will also permanently delete all interactions/notes attached to this person. This cannot be undone.`)) {
+This will also permanently delete all interactions/notes saved with this person in Trash. This cannot be undone.`)) {
     trash = trash.filter(x=>x.id!==id);
     interactions = interactions.filter(i => i.personId !== id);
     save();
@@ -950,7 +993,7 @@ function renderDashboard() {
     const lastDate = pi.length ? Math.max(...pi.map(i=>new Date(i.date).getTime())) : p.createdAt;
     const daysSince = Math.floor((Date.now()-lastDate)/86400000);
     return { ...p, daysSince };
-  }).filter(p=>p.daysSince>=30).sort((a,b)=>b.daysSince-a.daysSince).slice(0,5);
+  }).filter(p=>p.daysSince>=14).sort((a,b)=>b.daysSince-a.daysSince).slice(0,5);
   const rcEl = document.getElementById('dash-reconnect');
   rcEl.innerHTML = rcList.length ? rcList.map(p=>
     `<div class="reconnect-item"><span>${esc(p.name)}</span><span style="font-size:0.76rem;color:#e67e22;">${p.daysSince}d ago</span></div>`
@@ -1050,6 +1093,6 @@ renderGuide();
 updateTrashBadge();
 </script>
 
-<!-- ROOTSTOCK V6 MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
+<!-- ROOTSTOCK V7 TRASH-SAFE MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
 </body>
 </html>
