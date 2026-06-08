@@ -140,19 +140,59 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .i-card.clickable{cursor:pointer;}
 .i-card.clickable:hover{box-shadow:0 4px 14px rgba(0,0,0,0.11);transform:translateY(-1px);}
 
+
+/* AUTH SCREEN */
+.auth-screen{min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#f4f6f4;padding:1.5rem;}
+.auth-card{background:white;border-radius:18px;padding:2rem;width:100%;max-width:430px;box-shadow:0 6px 24px rgba(0,0,0,0.09);}
+.auth-card h1{font-size:1.35rem;margin-bottom:0.35rem;color:#1f5c3a;}
+.auth-card p{font-size:0.86rem;color:#666;line-height:1.5;margin-bottom:1rem;}
+.auth-card input{width:100%;padding:0.65rem 0.8rem;border:1.5px solid #ddd;border-radius:9px;margin-bottom:0.7rem;font-size:0.9rem;}
+.auth-actions{display:flex;gap:0.55rem;flex-wrap:wrap;margin-top:0.4rem;}
+.auth-divider{display:flex;align-items:center;gap:0.65rem;margin:1rem 0;color:#aaa;font-size:0.78rem;}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#eee;flex:1;}
+.auth-error{color:#c0392b;font-size:0.8rem;margin-top:0.7rem;min-height:1rem;}
+.auth-note{font-size:0.76rem;color:#888;margin-top:0.85rem;line-height:1.45;}
+.user-badge{font-size:0.72rem;color:rgba(255,255,255,0.72);padding:0.65rem 1.25rem;line-height:1.45;word-break:break-word;}
+
 @media(max-width:640px){
   .sidebar{width:52px;}.sidebar-brand .brand-sub,.nav-label,.nav-item span{display:none;}
   .nav-item{justify-content:center;padding:0.6rem;}.two-col{grid-template-columns:1fr;}
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <h1>🌱 Rootstock</h1>
+    <p>Log in to access your private network CRM. Each user gets their own contacts, interactions, follow-ups, and trash.</p>
+    <input id="auth-email" type="email" placeholder="Email">
+    <input id="auth-password" type="password" placeholder="Password">
+    <div class="auth-actions">
+      <button class="btn btn-primary" onclick="signInWithEmail()">Log In</button>
+      <button class="btn btn-secondary" onclick="signUpWithEmail()">Create Account</button>
+    </div>
+    <div class="auth-divider">or</div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="signInWithGoogle()">Continue with Google</button>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-note">Your data is saved under your Firebase user ID. Other users should not be able to access it if your Firestore rules are set to <code>request.auth.uid == userId</code>.</div>
+  </div>
+</div>
+
+
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="app-sidebar" style="display:none;">
   <div class="sidebar-brand">
     <div class="brand-name">Rootstock🌱</div>
     <div class="brand-sub">Personal Network Manager</div>
+  </div>
+  <div class="user-badge" id="user-badge">Not signed in</div>
+  <div style="padding:0 1.25rem 0.5rem;">
+    <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;" onclick="logout()">Log out</button>
   </div>
   <div class="nav-section">
     <div class="nav-label">Main</div>
@@ -168,7 +208,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <!-- MAIN -->
-<div class="main">
+<div class="main" id="app-main" style="display:none;">
 
   <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
@@ -199,8 +239,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <h2>People</h2>
       <div style="display:flex;gap:0.5rem;">
         <button class="btn btn-secondary" onclick="exportCSV('people')">⬇ Export CSV</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('csv-import-input').click()">⬆ Import CSV</button>
-        <input type="file" id="csv-import-input" accept=".csv,text/csv" style="display:none;" onchange="importPeopleCSV(event)">
         <button class="btn btn-primary" onclick="openAddPerson()">+ Add Person</button>
       </div>
     </div>
@@ -380,12 +418,188 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────
-let people       = JSON.parse(localStorage.getItem('rs_people')       || '[]');
-let interactions = JSON.parse(localStorage.getItem('rs_interactions') || '[]');
-let trash        = JSON.parse(localStorage.getItem('rs_trash')        || '[]');
-let interactionTrash = JSON.parse(localStorage.getItem('rs_interaction_trash') || '[]');
+// ── FIREBASE AUTH + MULTI-USER DATA ────────────────────────────────
+// This version keeps your existing app logic intact and syncs the full app state
+// to one private Firestore document per logged-in user:
+// users/{uid}/appState/rootstock
+const firebaseConfig = {
+  apiKey: "AIzaSyAD0MCUR9LHEAdym-0PO-UC9WaSatIjqE4",
+  authDomain: "rootstock-ba97d.firebaseapp.com",
+  projectId: "rootstock-ba97d",
+  storageBucket: "rootstock-ba97d.firebasestorage.app",
+  messagingSenderId: "169309352205",
+  appId: "1:169309352205:web:07fbffa514187f93268044"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+let cloudLoaded = false;
+let saveTimer = null;
+
+let people = [];
+let interactions = [];
+let trash = [];
+let interactionTrash = [];
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+function setAuthError(message) {
+  const el = document.getElementById('auth-error');
+  if (el) el.textContent = message || '';
+}
+
+function signUpWithEmail() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  setAuthError('');
+  if (!email || !password) { setAuthError('Enter an email and password.'); return; }
+  auth.createUserWithEmailAndPassword(email, password).catch(err => setAuthError(err.message));
+}
+
+function signInWithEmail() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  setAuthError('');
+  if (!email || !password) { setAuthError('Enter an email and password.'); return; }
+  auth.signInWithEmailAndPassword(email, password).catch(err => setAuthError(err.message));
+}
+
+function signInWithGoogle() {
+  setAuthError('');
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => setAuthError(err.message));
+}
+
+function logout() {
+  auth.signOut();
+}
+
+function showSignedOut() {
+  currentUser = null;
+  cloudLoaded = false;
+  people = [];
+  interactions = [];
+  trash = [];
+  interactionTrash = [];
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-sidebar').style.display = 'none';
+  document.getElementById('app-main').style.display = 'none';
+}
+
+function showSignedIn(user) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-sidebar').style.display = 'flex';
+  document.getElementById('app-main').style.display = 'block';
+  const badge = document.getElementById('user-badge');
+  if (badge) badge.textContent = `Signed in as ${user.email || user.displayName || user.uid}`;
+}
+
+function appStateRef() {
+  if (!currentUser) throw new Error('No user is signed in.');
+  return db.collection('users').doc(currentUser.uid).collection('appState').doc('rootstock');
+}
+
+function legacyLocalStateExists() {
+  return ['rs_people','rs_interactions','rs_trash','rs_interaction_trash'].some(k => {
+    try { return JSON.parse(localStorage.getItem(k) || '[]').length; }
+    catch { return false; }
+  });
+}
+
+function readLegacyLocalState() {
+  return {
+    people: JSON.parse(localStorage.getItem('rs_people') || '[]'),
+    interactions: JSON.parse(localStorage.getItem('rs_interactions') || '[]'),
+    trash: JSON.parse(localStorage.getItem('rs_trash') || '[]'),
+    interactionTrash: JSON.parse(localStorage.getItem('rs_interaction_trash') || '[]')
+  };
+}
+
+function userLocalKey(name) {
+  return currentUser ? `rs_${currentUser.uid}_${name}` : `rs_anonymous_${name}`;
+}
+
+function saveLocalCache() {
+  localStorage.setItem(userLocalKey('people'), JSON.stringify(people));
+  localStorage.setItem(userLocalKey('interactions'), JSON.stringify(interactions));
+  localStorage.setItem(userLocalKey('trash'), JSON.stringify(trash));
+  localStorage.setItem(userLocalKey('interaction_trash'), JSON.stringify(interactionTrash));
+}
+
+function loadUserLocalCache() {
+  people = JSON.parse(localStorage.getItem(userLocalKey('people')) || '[]');
+  interactions = JSON.parse(localStorage.getItem(userLocalKey('interactions')) || '[]');
+  trash = JSON.parse(localStorage.getItem(userLocalKey('trash')) || '[]');
+  interactionTrash = JSON.parse(localStorage.getItem(userLocalKey('interaction_trash')) || '[]');
+}
+
+async function loadCloudState() {
+  if (!currentUser) return;
+  cloudLoaded = false;
+
+  try {
+    const snap = await appStateRef().get();
+
+    if (snap.exists) {
+      const data = snap.data() || {};
+      people = data.people || [];
+      interactions = data.interactions || [];
+      trash = data.trash || [];
+      interactionTrash = data.interactionTrash || [];
+    } else if (legacyLocalStateExists()) {
+      const migrate = confirm('Rootstock found data saved in this browser from your earlier local version. Import it into this signed-in account?');
+      if (migrate) {
+        const legacy = readLegacyLocalState();
+        people = legacy.people || [];
+        interactions = legacy.interactions || [];
+        trash = legacy.trash || [];
+        interactionTrash = legacy.interactionTrash || [];
+        await syncCloudStateNow();
+      } else {
+        loadUserLocalCache();
+      }
+    } else {
+      loadUserLocalCache();
+    }
+
+    cloudLoaded = true;
+    saveLocalCache();
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    alert('Could not load cloud data. Using local cached data for now. Check Firebase config/rules and internet connection.');
+    loadUserLocalCache();
+    cloudLoaded = true;
+    renderAll();
+  }
+}
+
+async function syncCloudStateNow() {
+  if (!currentUser) return;
+  const payload = {
+    people,
+    interactions,
+    trash,
+    interactionTrash,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    ownerUid: currentUser.uid,
+    ownerEmail: currentUser.email || ''
+  };
+  await appStateRef().set(payload, { merge: true });
+}
+
+function scheduleCloudSave() {
+  if (!currentUser || !cloudLoaded) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    syncCloudStateNow().catch(err => {
+      console.error(err);
+      alert('Could not save to cloud. Your data is still saved locally in this browser.');
+    });
+  }, 400);
+}
 
 function save() {
   const now = Date.now();
@@ -405,10 +619,8 @@ function save() {
     interactions = interactions.filter(i => !trashedIds.has(i.personId));
   }
 
-  localStorage.setItem('rs_people',             JSON.stringify(people));
-  localStorage.setItem('rs_interactions',       JSON.stringify(interactions));
-  localStorage.setItem('rs_trash',              JSON.stringify(trash));
-  localStorage.setItem('rs_interaction_trash',  JSON.stringify(interactionTrash));
+  saveLocalCache();
+  scheduleCloudSave();
   updateTrashBadge();
 }
 
@@ -418,6 +630,25 @@ function updateTrashBadge() {
   if (count) { b.textContent = count; b.style.display = 'inline-block'; }
   else b.style.display = 'none';
 }
+
+function renderAll() {
+  renderDashboard();
+  renderPeople();
+  renderInteractions();
+  renderTrash();
+  renderGuide();
+  updateTrashBadge();
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    showSignedIn(user);
+    loadCloudState();
+  } else {
+    showSignedOut();
+  }
+});
 
 // ── NAV ───────────────────────────────────────────────────────────
 function showPage(id) {
@@ -1172,132 +1403,6 @@ function renderDashboard() {
   }
 }
 
-
-// ── CSV IMPORT ────────────────────────────────────────────────────
-function importPeopleCSV(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const csvText = e.target.result;
-      const rows = parseCSV(csvText);
-      if (!rows.length) {
-        alert('No rows found in the CSV file.');
-        event.target.value = '';
-        return;
-      }
-
-      const headers = rows[0].map(h => normalizeHeader(h));
-      const dataRows = rows.slice(1).filter(row => row.some(cell => String(cell || '').trim()));
-
-      let imported = 0;
-      let skippedDuplicates = [];
-      let skippedNoName = 0;
-
-      dataRows.forEach(row => {
-        const record = {};
-        headers.forEach((header, idx) => {
-          record[header] = (row[idx] || '').trim();
-        });
-
-        const name = pickField(record, ['name','full name','full_name','person','contact','contact name']);
-        if (!name) {
-          skippedNoName++;
-          return;
-        }
-
-        const dupe = people.find(p => (p.name || '').trim().toLowerCase() === name.trim().toLowerCase());
-        if (dupe) {
-          skippedDuplicates.push(name);
-          return;
-        }
-
-        people.push({
-          id: uid(),
-          createdAt: Date.now(),
-          name: name.trim(),
-          company: pickField(record, ['company','company / org','company/org','organization','org','institution']),
-          role: pickField(record, ['role','role / title','title','job title','position']),
-          email: pickField(record, ['email','email address','e-mail']),
-          category: pickField(record, ['category','relationship category','relationship','type']),
-          mbti: pickField(record, ['mbti','mbti type']) || 'Unknown',
-          disc: pickField(record, ['disc','disc type']) || 'Unknown',
-          enneagram: pickField(record, ['enneagram','enneagram type']) || 'Unknown',
-          tags: pickField(record, ['tags','tag']),
-          notes: pickField(record, ['notes','personal notes','note']),
-          vision: pickField(record, ['why they matter','why do they matter','vision','why they matter to your vision']),
-          engage: pickField(record, ['how to engage','engage','communication','communication style'])
-        });
-        imported++;
-      });
-
-      save();
-      renderPeople();
-      renderDashboard();
-
-      let msg = `CSV import complete.\n\nImported: ${imported}`;
-      if (skippedDuplicates.length) msg += `\nSkipped duplicates: ${skippedDuplicates.length}\n- ${skippedDuplicates.slice(0,10).join('\n- ')}${skippedDuplicates.length > 10 ? '\n...' : ''}`;
-      if (skippedNoName) msg += `\nSkipped rows without a name: ${skippedNoName}`;
-      alert(msg);
-    } catch (err) {
-      console.error(err);
-      alert('Could not import this CSV. Please check the file format and headers.');
-    } finally {
-      event.target.value = '';
-    }
-  };
-  reader.readAsText(file);
-}
-
-function normalizeHeader(header) {
-  return String(header || '').trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function pickField(record, keys) {
-  for (const key of keys) {
-    const normalized = normalizeHeader(key);
-    if (record[normalized]) return record[normalized];
-  }
-  return '';
-}
-
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let cell = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
-
-    if (char === '"' && inQuotes && next === '"') {
-      cell += '"';
-      i++;
-    } else if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      row.push(cell);
-      cell = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') i++;
-      row.push(cell);
-      if (row.some(v => String(v || '').trim())) rows.push(row);
-      row = [];
-      cell = '';
-    } else {
-      cell += char;
-    }
-  }
-
-  row.push(cell);
-  if (row.some(v => String(v || '').trim())) rows.push(row);
-  return rows;
-}
-
-
 // ── EXPORT ────────────────────────────────────────────────────────
 function exportCSV(type) {
   let headers, rows;
@@ -1368,11 +1473,10 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── INIT ──────────────────────────────────────────────────────────
-renderDashboard();
+// App rendering starts after Firebase Auth confirms the signed-in user.
 renderGuide();
-updateTrashBadge();
 </script>
 
-<!-- ROOTSTOCK V10 SMALL DELETE BUTTONS MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
+<!-- ROOTSTOCK V11 MULTI-USER FIREBASE AUTH APPSTATE MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
 </body>
 </html>
