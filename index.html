@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rootstock</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;}
@@ -136,6 +137,8 @@ textarea{resize:vertical;min-height:72px;}
 .ritem:last-child{border-bottom:none;}
 .hidden{display:none!important;}
 .c0{background:#7c83fd;}.c1{background:#f59e0b;}.c2{background:#10b981;}.c3{background:#ef4444;}.c4{background:#8b5cf6;}.c5{background:#06b6d4;}.c6{background:#f97316;}.c7{background:#ec4899;}
+.sync-badge{position:fixed;bottom:16px;right:16px;background:#10b981;color:white;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;opacity:0;transition:opacity 0.4s;z-index:200;pointer-events:none;}
+.sync-badge.show{opacity:1;}
 @media(max-width:700px){
   .sidebar{width:52px;}
   .sidebar-logo,.nav-section-title,.nav-item span{display:none;}
@@ -165,7 +168,6 @@ textarea{resize:vertical;min-height:72px;}
       <div class="nav-item" id="nav-guide" onclick="navigate('guide',this)"><span>🧠</span><span>Personality Guide</span></div>
     </div>
   </div>
-
   <div class="main">
     <div id="view-dashboard">
       <div class="header">
@@ -199,7 +201,6 @@ textarea{resize:vertical;min-height:72px;}
         </div>
       </div>
     </div>
-
     <div id="view-people" class="hidden">
       <div class="header">
         <h1>People</h1>
@@ -227,7 +228,6 @@ textarea{resize:vertical;min-height:72px;}
         <div class="people-grid" id="pgrid"></div>
       </div>
     </div>
-
     <div id="view-interactions" class="hidden">
       <div class="header">
         <h1>All Interactions</h1>
@@ -238,7 +238,6 @@ textarea{resize:vertical;min-height:72px;}
       </div>
       <div class="content"><div id="all-ints"></div></div>
     </div>
-
     <div id="view-guide" class="hidden">
       <div class="header"><h1>Personality Guide</h1></div>
       <div class="content">
@@ -254,8 +253,7 @@ textarea{resize:vertical;min-height:72px;}
     </div>
   </div>
 </div>
-
-<!-- ADD/EDIT PERSON MODAL -->
+<div class="sync-badge" id="sync-badge">☁️ Saved to cloud</div>
 <div id="m-person" class="modal-overlay hidden">
   <div class="modal">
     <div class="mhdr"><h3 id="mp-title">Add Person</h3><button class="mclose" onclick="cm('m-person')">×</button></div>
@@ -285,7 +283,7 @@ textarea{resize:vertical;min-height:72px;}
           <select id="p-enn"><option value="">Unknown</option><option value="1">1 — Reformer</option><option value="2">2 — Helper</option><option value="3">3 — Achiever</option><option value="4">4 — Individualist</option><option value="5">5 — Investigator</option><option value="6">6 — Loyalist</option><option value="7">7 — Enthusiast</option><option value="8">8 — Challenger</option><option value="9">9 — Peacemaker</option></select>
         </div>
       </div>
-      <div class="fg"><label>Why do they matter to your vision? *</label><textarea id="p-purpose" placeholder="e.g. Can open doors at tech companies, advise on AI research…"></textarea></div>
+      <div class="fg"><label>Why do they matter to your vision?</label><textarea id="p-purpose" placeholder="e.g. Can open doors at tech companies, advise on AI research…"></textarea></div>
       <div class="fg"><label>How to engage them</label><textarea id="p-comm" placeholder="e.g. Direct emailer, loves data, prefers scheduled calls…" style="min-height:56px"></textarea></div>
       <div class="fg"><label>Tags (comma-separated)</label><input id="p-tags" placeholder="e.g. AI, Research, Startup, Career"></div>
       <div class="fg"><label>Personal Notes</label><textarea id="p-notes" placeholder="Anything else to remember…" style="min-height:56px"></textarea></div>
@@ -296,8 +294,6 @@ textarea{resize:vertical;min-height:72px;}
     </div>
   </div>
 </div>
-
-<!-- PERSON DETAIL MODAL -->
 <div id="m-detail" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="mhdr"><h3>Person Profile</h3><button class="mclose" onclick="cm('m-detail')">×</button></div>
@@ -305,39 +301,21 @@ textarea{resize:vertical;min-height:72px;}
     <div class="mfoot" id="m-detail-foot"></div>
   </div>
 </div>
-
-<!-- LOG INTERACTION MODAL -->
 <div id="m-int" class="modal-overlay hidden">
   <div class="modal">
     <div class="mhdr"><h3 id="mint-title">Log Interaction</h3><button class="mclose" onclick="cm('m-int')">×</button></div>
     <div class="mbody">
       <input type="hidden" id="int-id">
-      <div class="fg">
-        <label>Person *</label>
-        <select id="int-person-sel"></select>
-      </div>
+      <div class="fg"><label>Person *</label><select id="int-person-sel"></select></div>
       <div class="frow">
-        <div class="fg">
-          <label>Type</label>
-          <select id="int-type">
-            <option>Meeting</option><option>Call</option><option>Email</option>
-            <option>Message</option><option>Event</option><option>Other</option>
-          </select>
+        <div class="fg"><label>Type</label>
+          <select id="int-type"><option>Meeting</option><option>Call</option><option>Email</option><option>Message</option><option>Event</option><option>Other</option></select>
         </div>
-        <div class="fg">
-          <label>Date *</label>
-          <input type="date" id="int-date">
-        </div>
+        <div class="fg"><label>Date *</label><input type="date" id="int-date"></div>
       </div>
-      <div class="fg">
-        <label>Notes</label>
-        <textarea id="int-notes" placeholder="What was discussed? Key takeaways, action items, follow-ups…"></textarea>
-      </div>
-      <div class="fg">
-        <label>Sentiment</label>
-        <select id="int-sentiment">
-          <option>Positive</option><option>Neutral</option><option>Follow-up needed</option>
-        </select>
+      <div class="fg"><label>Notes</label><textarea id="int-notes" placeholder="What was discussed? Key takeaways, action items…"></textarea></div>
+      <div class="fg"><label>Sentiment</label>
+        <select id="int-sentiment"><option>Positive</option><option>Neutral</option><option>Follow-up needed</option></select>
       </div>
     </div>
     <div class="mfoot">
@@ -346,431 +324,52 @@ textarea{resize:vertical;min-height:72px;}
     </div>
   </div>
 </div>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"><\/script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"><\/script>
 <script>
-let people = [];
-let interactions = [];
-
-function saveData() {
-  localStorage.setItem('rootstock_people', JSON.stringify(people));
-  localStorage.setItem('rootstock_ints', JSON.stringify(interactions));
-}
-function loadData() {
-  const p = localStorage.getItem('rootstock_people');
-  const i = localStorage.getItem('rootstock_ints');
-  if (p) people = JSON.parse(p);
-  if (i) interactions = JSON.parse(i);
-}
-loadData();
-
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
-function colorClass(idx) { return 'c'+(idx%8); }
-function today() { return new Date().toISOString().split('T')[0]; }
-
-function formatDate(d) {
-  if (!d) return '';
-  const date = new Date(d + 'T00:00:00');
-  return date.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-}
-
-function timeAgo(d) {
-  const diff = Date.now() - new Date(d+'T00:00:00').getTime();
-  const days = Math.floor(diff/86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return days+'d ago';
-  if (days < 30) return Math.floor(days/7)+'w ago';
-  if (days < 365) return Math.floor(days/30)+'mo ago';
-  return Math.floor(days/365)+'y ago';
-}
-
-function sentimentClass(s) {
-  if (s === 'Positive') return 'sp';
-  if (s === 'Follow-up needed') return 'sf';
-  return 'sn';
-}
-function tlClass(s) {
-  if (s === 'Positive') return 'positive';
-  if (s === 'Follow-up needed') return 'followup';
-  return 'neutral';
-}
-
-// ========================
-// CSV EXPORT
-// ========================
-function escapeCSV(val) {
-  if (val === null || val === undefined) return '';
-  const str = String(val);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
-}
-
-function exportCSV() {
-  if (people.length === 0) { alert('No people to export yet.'); return; }
-  const headers = ['Name','Company','Role','Email','Category','MBTI','DISC','Enneagram','Tags','Why They Matter','How to Engage','Notes','Total Interactions','Last Contact','Date Added'];
-  const rows = people.map(p => {
-    const pInts = interactions.filter(i => i.personId === p.id);
-    const lastContact = pInts.length > 0
-      ? formatDate(pInts.sort((a,b) => new Date(b.date)-new Date(a.date))[0].date)
-      : 'Never';
-    return [
-      p.name, p.company, p.role, p.email, p.category,
-      p.mbti, p.disc, p.enneagram, p.tags,
-      p.purpose, p.comm, p.notes,
-      pInts.length, lastContact,
-      p.created ? formatDate(p.created.split('T')[0]) : ''
-    ].map(escapeCSV).join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rootstock-contacts-' + today() + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportInteractionsCSV() {
-  if (interactions.length === 0) { alert('No interactions to export yet.'); return; }
-  const headers = ['Person Name','Company','Role','Date','Type','Sentiment','Notes'];
-  const sorted = [...interactions].sort((a,b) => new Date(b.date)-new Date(a.date));
-  const rows = sorted.map(i => {
-    const person = people.find(p => p.id === i.personId);
-    return [
-      person ? person.name : 'Unknown',
-      person ? person.company : '',
-      person ? person.role : '',
-      i.date, i.type, i.sentiment, i.notes
-    ].map(escapeCSV).join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rootstock-interactions-' + today() + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function navigate(view, el) {
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('[id^="view-"]').forEach(v=>v.classList.add('hidden'));
-  document.getElementById('view-'+view).classList.remove('hidden');
-  if (view==='dashboard') renderDashboard();
-  if (view==='people') renderPeople();
-  if (view==='interactions') renderAllInteractions();
-  if (view==='guide') renderGuide();
-}
-function cm(id) { document.getElementById(id).classList.add('hidden'); }
-function om(id) { document.getElementById(id).classList.remove('hidden'); }
-
-function renderDashboard() {
-  document.getElementById('s-total').textContent = people.length;
-  document.getElementById('s-ints').textContent = interactions.length;
-  document.getElementById('s-fu').textContent = interactions.filter(i=>i.sentiment==='Follow-up needed').length;
-  document.getElementById('s-cats').textContent = [...new Set(people.map(p=>p.category).filter(Boolean))].length;
-
-  const act = document.getElementById('d-activity');
-  const recent = [...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-  if (recent.length===0) {
-    act.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Log your first interaction to see activity here.</p></div>';
-  } else {
-    act.innerHTML=recent.map(i=>{
-      const person=people.find(p=>p.id===i.personId);
-      const note=i.notes?': '+i.notes.slice(0,55)+(i.notes.length>55?'…':''):'';
-      return `<div class="act-item"><div class="act-dot"></div><div>
-        <div class="act-text"><strong>${person?person.name:'Unknown'}</strong> — ${i.type}${note}</div>
-        <div class="act-time">${formatDate(i.date)} · ${timeAgo(i.date)}</div>
-      </div></div>`;
-    }).join('');
-  }
-
-  const catEl=document.getElementById('d-cats');
-  const catCounts={};
-  people.forEach(p=>{if(p.category) catCounts[p.category]=(catCounts[p.category]||0)+1;});
-  const catEntries=Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
-  if(catEntries.length===0){catEl.innerHTML='<p style="font-size:12px;color:#9ca3af">No data yet.</p>';}
-  else{
-    const max=catEntries[0][1];
-    catEl.innerHTML=catEntries.map(([cat,cnt])=>`<div class="bar-item"><div class="bar-label">${cat}</div><div class="bar-cont"><div class="bar-fill" style="width:${Math.round((cnt/max)*100)}%"></div></div><div class="bar-cnt">${cnt}</div></div>`).join('');
-  }
-
-  const reconEl=document.getElementById('d-reconnect');
-  const needRecon=people.filter(p=>{
-    const ints=interactions.filter(i=>i.personId===p.id);
-    if(ints.length===0) return true;
-    const last=Math.max(...ints.map(i=>new Date(i.date+'T00:00:00').getTime()));
-    return (Date.now()-last)>30*86400000;
-  }).slice(0,5);
-  if(needRecon.length===0){reconEl.innerHTML='<p style="font-size:12px;color:#9ca3af">You\'re all caught up!</p>';}
-  else{
-    reconEl.innerHTML=needRecon.map((p,idx)=>`<div class="ritem" onclick="openDetail('${p.id}')"><div class="avatar ${colorClass(idx)}" style="width:32px;height:32px;font-size:12px;border-radius:8px">${initials(p.name)}</div><div><div style="font-size:13px;font-weight:600">${p.name}</div><div style="font-size:11px;color:#9ca3af">${p.role||p.category||''}</div></div></div>`).join('');
-  }
-}
-
-function renderPeople() {
-  const q=(document.getElementById('psearch').value||'').toLowerCase();
-  const fc=document.getElementById('fcat').value;
-  const fm=document.getElementById('fmbti').value;
-  let filtered=people.filter(p=>{
-    const matchQ=!q||p.name.toLowerCase().includes(q)||(p.role||'').toLowerCase().includes(q)||(p.company||'').toLowerCase().includes(q)||(p.tags||'').toLowerCase().includes(q);
-    return matchQ&&(!fc||p.category===fc)&&(!fm||p.mbti===fm);
-  });
-  const grid=document.getElementById('pgrid');
-  if(filtered.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👥</div><h3>No people found</h3><p>Add someone or adjust your filters.</p></div>';return;}
-  grid.innerHTML=filtered.map((p,idx)=>{
-    const pInts=interactions.filter(i=>i.personId===p.id);
-    const lastInt=pInts.length>0?formatDate(pInts.sort((a,b)=>new Date(b.date)-new Date(a.date))[0].date):'Never';
-    const tags=p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):[];
-    return `<div class="person-card" onclick="openDetail('${p.id}')">
-      <div class="pcard-header"><div class="avatar ${colorClass(idx)}">${initials(p.name)}</div><div><div class="pname">${p.name}</div><div class="prole">${[p.role,p.company].filter(Boolean).join(' · ')||'No title'}</div></div></div>
-      <div class="badges">${p.category?`<span class="badge bm">${p.category}</span>`:''} ${p.mbti?`<span class="badge bd">${p.mbti}</span>`:''} ${p.disc?`<span class="badge bc">${p.disc}</span>`:''} ${tags.slice(0,2).map(t=>`<span class="badge be">${t}</span>`).join('')}</div>
-      ${p.purpose?`<div class="ppurpose">${p.purpose.slice(0,90)}${p.purpose.length>90?'…':''}</div>`:''}
-      <div class="pfoot"><span>Last contact: ${lastInt}</span><span>${pInts.length} interaction${pInts.length!==1?'s':''}</span></div>
-    </div>`;
-  }).join('');
-}
-
-function openAddPerson() {
-  document.getElementById('mp-title').textContent='Add Person';
-  document.getElementById('p-id').value='';
-  ['p-name','p-company','p-role','p-email','p-tags','p-notes','p-purpose','p-comm'].forEach(id=>document.getElementById(id).value='');
-  ['p-cat','p-mbti','p-disc','p-enn'].forEach(id=>document.getElementById(id).value='');
-  om('m-person');
-}
-
-function openEditPerson(id) {
-  const p=people.find(x=>x.id===id);
-  if(!p) return;
-  document.getElementById('mp-title').textContent='Edit Person';
-  document.getElementById('p-id').value=p.id;
-  document.getElementById('p-name').value=p.name||'';
-  document.getElementById('p-company').value=p.company||'';
-  document.getElementById('p-role').value=p.role||'';
-  document.getElementById('p-email').value=p.email||'';
-  document.getElementById('p-cat').value=p.category||'';
-  document.getElementById('p-mbti').value=p.mbti||'';
-  document.getElementById('p-disc').value=p.disc||'';
-  document.getElementById('p-enn').value=p.enneagram||'';
-  document.getElementById('p-purpose').value=p.purpose||'';
-  document.getElementById('p-comm').value=p.comm||'';
-  document.getElementById('p-tags').value=p.tags||'';
-  document.getElementById('p-notes').value=p.notes||'';
-  cm('m-detail');
-  om('m-person');
-}
-
-function savePerson() {
-  const name=document.getElementById('p-name').value.trim();
-  if(!name){alert('Full name is required.');return;}
-  const id=document.getElementById('p-id').value||uid();
-  const existing=people.findIndex(p=>p.id===id);
-  const person={
-    id,name,
-    company:document.getElementById('p-company').value.trim(),
-    role:document.getElementById('p-role').value.trim(),
-    email:document.getElementById('p-email').value.trim(),
-    category:document.getElementById('p-cat').value,
-    mbti:document.getElementById('p-mbti').value,
-    disc:document.getElementById('p-disc').value,
-    enneagram:document.getElementById('p-enn').value,
-    purpose:document.getElementById('p-purpose').value.trim(),
-    comm:document.getElementById('p-comm').value.trim(),
-    tags:document.getElementById('p-tags').value.trim(),
-    notes:document.getElementById('p-notes').value.trim(),
-    created:existing>=0?people[existing].created:new Date().toISOString()
-  };
-  if(existing>=0){people[existing]=person;}else{people.push(person);}
-  saveData();
-  cm('m-person');
-  renderPeople();
-  renderDashboard();
-}
-
-function deletePerson(id) {
-  if(!confirm('Delete this person and all their interactions?')) return;
-  people=people.filter(p=>p.id!==id);
-  interactions=interactions.filter(i=>i.personId!==id);
-  saveData();
-  cm('m-detail');
-  renderPeople();
-  renderDashboard();
-}
-
-function openDetail(id) {
-  const p=people.find(x=>x.id===id);
-  if(!p) return;
-  const idx=people.indexOf(p);
-  const pInts=[...interactions.filter(i=>i.personId===id)].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const tags=p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):[];
-
-  const timelineHTML = pInts.length===0
-    ? '<p style="font-size:12px;color:#9ca3af;padding:4px 0">No interactions logged yet. Add one below.</p>'
-    : `<div class="timeline">${pInts.map(i=>`
-        <div class="tl-item">
-          <div class="tl-dot ${tlClass(i.sentiment)}"></div>
-          <div class="tl-card ${tlClass(i.sentiment)}">
-            <div class="tl-head">
-              <span class="tl-type">${i.type}</span>
-              <span class="tl-date">📅 ${formatDate(i.date)}</span>
-            </div>
-            ${i.notes?`<div class="tl-notes">${i.notes}</div>`:''}
-            <div class="tl-foot">
-              <span class="sbadge ${sentimentClass(i.sentiment)}">${i.sentiment}</span>
-              <button class="btn btn-danger btn-sm" onclick="deleteInteraction('${i.id}','${p.id}')">Delete</button>
-            </div>
-          </div>
-        </div>`).join('')}</div>`;
-
-  document.getElementById('m-detail-body').innerHTML=`
-    <div class="det-header">
-      <div class="avatar av-lg ${colorClass(idx)}">${initials(p.name)}</div>
-      <div class="det-info">
-        <h2>${p.name}</h2>
-        <p>${[p.role,p.company].filter(Boolean).join(' · ')||'No title'}</p>
-        ${p.email?`<p style="margin-top:4px;color:#7c83fd">${p.email}</p>`:''}
-      </div>
-    </div>
-    <div class="badges" style="margin-bottom:16px">
-      ${p.category?`<span class="badge bm">${p.category}</span>`:''}
-      ${p.mbti?`<span class="badge bd">MBTI: ${p.mbti}</span>`:''}
-      ${p.disc?`<span class="badge bc">DISC: ${p.disc}</span>`:''}
-      ${p.enneagram?`<span class="badge be">Enn: ${p.enneagram}</span>`:''}
-      ${tags.map(t=>`<span class="badge" style="background:#f3f4f6;color:#374151">${t}</span>`).join('')}
-    </div>
-    ${p.purpose?`<div class="dsec"><h4>Why They Matter</h4><p>${p.purpose}</p></div>`:''}
-    ${p.comm?`<div class="dsec"><h4>How to Engage</h4><p>${p.comm}</p></div>`:''}
-    ${p.notes?`<div class="dsec"><h4>Notes</h4><p>${p.notes}</p></div>`:''}
-    <div class="dsec">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <h4 style="margin-bottom:0">Interaction History (${pInts.length})</h4>
-        <button class="btn btn-primary btn-sm" onclick="openLogInt('${p.id}')">+ Log New Interaction</button>
-      </div>
-      ${timelineHTML}
-    </div>`;
-
-  document.getElementById('m-detail-foot').innerHTML=`
-    <button class="btn btn-danger" onclick="deletePerson('${p.id}')">Delete Person</button>
-    <button class="btn btn-secondary" onclick="openEditPerson('${p.id}')">Edit Profile</button>`;
-
-  om('m-detail');
-}
-
-function openLogInt(personId) {
-  document.getElementById('int-id').value='';
-  document.getElementById('int-date').value=today();
-  document.getElementById('int-notes').value='';
-  document.getElementById('int-type').value='Meeting';
-  document.getElementById('int-sentiment').value='Positive';
-  document.getElementById('mint-title').textContent='Log Interaction';
-  const sel=document.getElementById('int-person-sel');
-  sel.innerHTML=people.map(p=>`<option value="${p.id}" ${p.id===personId?'selected':''}>${p.name}</option>`).join('');
-  if(people.length===0){alert('Add a person first before logging an interaction.');return;}
-  cm('m-detail');
-  om('m-int');
-}
-
-function saveInteraction() {
-  const personId=document.getElementById('int-person-sel').value;
-  if(!personId){alert('Please select a person.');return;}
-  const date=document.getElementById('int-date').value;
-  if(!date){alert('Please select a date.');return;}
-  const id=document.getElementById('int-id').value||uid();
-  const existing=interactions.findIndex(i=>i.id===id);
-  const interaction={
-    id,personId,
-    type:document.getElementById('int-type').value,
-    date,
-    notes:document.getElementById('int-notes').value.trim(),
-    sentiment:document.getElementById('int-sentiment').value
-  };
-  if(existing>=0){interactions[existing]=interaction;}else{interactions.push(interaction);}
-  saveData();
-  const pid=personId;
-  cm('m-int');
-  renderDashboard();
-  renderAllInteractions();
-  openDetail(pid);
-}
-
-function deleteInteraction(intId, personId) {
-  if(!confirm('Delete this interaction?')) return;
-  interactions=interactions.filter(i=>i.id!==intId);
-  saveData();
-  cm('m-detail');
-  openDetail(personId);
-  renderDashboard();
-}
-
-function renderAllInteractions() {
-  const el=document.getElementById('all-ints');
-  if(interactions.length===0){
-    el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Click + Log Interaction to get started.</p></div>';
-    return;
-  }
-  el.innerHTML=[...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(i=>{
-    const person=people.find(p=>p.id===i.personId);
-    return `<div class="iitem">
-      <div class="ihead">
-        <span class="itype">${person?person.name:'Unknown'} — ${i.type}</span>
-        <span class="idate">📅 ${formatDate(i.date)}</span>
-      </div>
-      ${i.notes?`<div class="inotes">${i.notes}</div>`:''}
-      <div class="ifoot">
-        <span class="sbadge ${sentimentClass(i.sentiment)}">${i.sentiment}</span>
-        <span style="font-size:11px;color:#9ca3af">${timeAgo(i.date)}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-const mbtiData=[
-  {type:'INTJ',name:'Architect',desc:'Strategic, independent, high standards. Driven by long-term vision.',tip:'Speak in logic and frameworks. Skip small talk.'},
-  {type:'INTP',name:'Thinker',desc:'Analytical, curious, loves complex problems. Dislikes rigid rules.',tip:'Engage with ideas. Let them explore before deciding.'},
-  {type:'ENTJ',name:'Commander',desc:'Bold, decisive, natural leader. Focused on efficiency and results.',tip:'Be direct and competent. Show ROI quickly.'},
-  {type:'ENTP',name:'Debater',desc:'Quick-witted, loves debate and new ideas. Dislikes routine.',tip:'Challenge them intellectually. They love a good argument.'},
-  {type:'INFJ',name:'Advocate',desc:'Idealistic, empathetic, deeply principled. Rare and insightful.',tip:'Connect on values and vision. Be genuine, not transactional.'},
-  {type:'INFP',name:'Mediator',desc:'Creative, compassionate, guided by inner values.',tip:'Share your authentic story. Avoid pressure tactics.'},
-  {type:'ENFJ',name:'Protagonist',desc:'Charismatic, people-focused, natural mentor.',tip:'Appeal to their desire to help and inspire others.'},
-  {type:'ENFP',name:'Campaigner',desc:'Enthusiastic, creative, loves people and possibilities.',tip:'Match their energy. Focus on potential and big ideas.'},
-  {type:'ISTJ',name:'Logistician',desc:'Reliable, detail-oriented, follows through consistently.',tip:'Be organized and prepared. Respect their time and process.'},
-  {type:'ISFJ',name:'Defender',desc:'Caring, loyal, practical. Puts others first.',tip:'Show appreciation. Build trust slowly and genuinely.'},
-  {type:'ESTJ',name:'Executive',desc:'Organized, direct, takes charge. Values tradition and order.',tip:'Be punctual, clear, and results-focused.'},
-  {type:'ESFJ',name:'Consul',desc:"Warm, social, highly attuned to others' needs.",tip:'Be warm and personal. Remember details about their life.'},
-  {type:'ISTP',name:'Virtuoso',desc:'Practical, observant, hands-on problem solver.',tip:'Be brief. Let them figure things out independently.'},
-  {type:'ISFP',name:'Adventurer',desc:'Gentle, artistic, lives in the present moment.',tip:"Keep it low pressure. Show, don't tell."},
-  {type:'ESTP',name:'Entrepreneur',desc:'Energetic, observant, thrives in fast-paced environments.',tip:'Keep it practical and action-oriented. No long theory.'},
-  {type:'ESFP',name:'Entertainer',desc:'Spontaneous, fun, loves people and experiences.',tip:'Make it fun and personal. They respond to enthusiasm.'}
-];
-const discData=[
-  {type:'D — Dominant',desc:'Direct, results-driven, competitive. Wants to win and lead.',tip:'Be brief and confident. Lead with results, not process.'},
-  {type:'I — Influential',desc:'Enthusiastic, social, optimistic. Loves recognition and collaboration.',tip:'Be warm and expressive. Share stories and celebrate wins.'},
-  {type:'S — Steady',desc:'Patient, reliable, team-oriented. Dislikes sudden change.',tip:'Be calm, consistent, and give them time to process.'},
-  {type:'C — Conscientious',desc:'Analytical, accurate, quality-focused. Needs facts and logic.',tip:'Come prepared with data. Avoid vague or emotional appeals.'}
-];
-
-function renderGuide() {
-  document.getElementById('g-mbti').innerHTML=mbtiData.map(m=>`<div class="pcard"><h4>${m.type} — ${m.name}</h4><p>${m.desc}</p><p class="tip">💡 ${m.tip}</p></div>`).join('');
-  document.getElementById('g-disc').innerHTML=discData.map(d=>`<div class="pcard"><h4>${d.type}</h4><p>${d.desc}</p><p class="tip">💡 ${d.tip}</p></div>`).join('');
-  document.getElementById('g-tips').innerHTML=`<div class="section"><div class="section-title" style="margin-bottom:14px">How to Identify Personality Types</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"><div class="pcard"><h4>Introvert vs Extrovert</h4><p>Extroverts think out loud and gain energy from people. Introverts pause before speaking and need quiet to recharge.</p></div><div class="pcard"><h4>Thinker vs Feeler</h4><p>Thinkers stay objective and ask "does this make sense?" Feelers care about impact on people and ask "does this feel right?"</p></div><div class="pcard"><h4>Judger vs Perceiver</h4><p>Judgers are scheduled and closure-seeking. Perceivers are flexible and keep options open.</p></div><div class="pcard"><h4>Sensor vs Intuitive</h4><p>Sensors focus on facts and what is proven. Intuitives focus on patterns and what could be.</p></div><div class="pcard"><h4>Under Stress</h4><p>INTJs withdraw. ENFPs scatter. ISTJs over-control. ENTJs become harsh. Stress reveals true type.</p></div><div class="pcard"><h4>What They Value</h4><p>NTs value competence. NFs value authenticity. SJs value reliability. SPs value freedom and action.</p></div></div></div>`;
-}
-
-function switchTab(tab, el) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  ['g-mbti','g-disc','g-tips'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-  document.getElementById('g-'+tab).classList.remove('hidden');
-}
-
+const firebaseConfig={apiKey:"AIzaSyCS5NScTGlxqR92gsj6R6z8ftEF3YS8Lg8",authDomain:"rootstock-ba97d.firebaseapp.com",projectId:"rootstock-ba97d",storageBucket:"rootstock-ba97d.firebasestorage.app",messagingSenderId:"169309352205",appId:"1:169309352205:web:07fbffa514187f93268044"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const peopleRef=db.collection('people');
+const intsRef=db.collection('interactions');
+let people=[];
+let interactions=[];
+let currentView='dashboard';
+peopleRef.onSnapshot(snap=>{people=snap.docs.map(d=>({id:d.id,...d.data()}));refreshCurrentView();});
+intsRef.onSnapshot(snap=>{interactions=snap.docs.map(d=>({id:d.id,...d.data()}));refreshCurrentView();});
+function refreshCurrentView(){if(currentView==='dashboard')renderDashboard();if(currentView==='people')renderPeople();if(currentView==='interactions')renderAllInteractions();}
+function showSynced(){const b=document.getElementById('sync-badge');b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2000);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function initials(name){return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function colorClass(idx){return 'c'+(idx%8);}
+function today(){return new Date().toISOString().split('T')[0];}
+function formatDate(d){if(!d)return'';const date=new Date(d+'T00:00:00');return date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function timeAgo(d){const diff=Date.now()-new Date(d+'T00:00:00').getTime();const days=Math.floor(diff/86400000);if(days===0)return'Today';if(days===1)return'Yesterday';if(days<7)return days+'d ago';if(days<30)return Math.floor(days/7)+'w ago';if(days<365)return Math.floor(days/30)+'mo ago';return Math.floor(days/365)+'y ago';}
+function sentimentClass(s){if(s==='Positive')return'sp';if(s==='Follow-up needed')return'sf';return'sn';}
+function tlClass(s){if(s==='Positive')return'positive';if(s==='Follow-up needed')return'followup';return'neutral';}
+function escapeCSV(val){if(val===null||val===undefined)return'';const str=String(val);if(str.includes(',')||str.includes('"')||str.includes('\n')){return'"'+str.replace(/"/g,'""')+'"';}return str;}
+function exportCSV(){if(people.length===0){alert('No people to export yet.');return;}const headers=['Name','Company','Role','Email','Category','MBTI','DISC','Enneagram','Tags','Why They Matter','How to Engage','Notes','Total Interactions','Last Contact','Date Added'];const rows=people.map(p=>{const pInts=interactions.filter(i=>i.personId===p.id);const lastContact=pInts.length>0?formatDate([...pInts].sort((a,b)=>new Date(b.date)-new Date(a.date))[0].date):'Never';return[p.name,p.company,p.role,p.email,p.category,p.mbti,p.disc,p.enneagram,p.tags,p.purpose,p.comm,p.notes,pInts.length,lastContact,p.created?formatDate(p.created.split('T')[0]):''].map(escapeCSV).join(',');});downloadCSV([headers.join(','),...rows].join('\n'),'rootstock-contacts-'+today()+'.csv');}
+function exportInteractionsCSV(){if(interactions.length===0){alert('No interactions to export yet.');return;}const headers=['Person Name','Company','Role','Date','Type','Sentiment','Notes'];const rows=[...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(i=>{const person=people.find(p=>p.id===i.personId);return[person?person.name:'Unknown',person?person.company:'',person?person.role:'',i.date,i.type,i.sentiment,i.notes].map(escapeCSV).join(',');});downloadCSV([headers.join(','),...rows].join('\n'),'rootstock-interactions-'+today()+'.csv');}
+function downloadCSV(csv,filename){const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+function navigate(view,el){currentView=view;document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active');document.querySelectorAll('[id^="view-"]').forEach(v=>v.classList.add('hidden'));document.getElementById('view-'+view).classList.remove('hidden');if(view==='dashboard')renderDashboard();if(view==='people')renderPeople();if(view==='interactions')renderAllInteractions();if(view==='guide')renderGuide();}
+function cm(id){document.getElementById(id).classList.add('hidden');}
+function om(id){document.getElementById(id).classList.remove('hidden');}
+function renderDashboard(){document.getElementById('s-total').textContent=people.length;document.getElementById('s-ints').textContent=interactions.length;document.getElementById('s-fu').textContent=interactions.filter(i=>i.sentiment==='Follow-up needed').length;document.getElementById('s-cats').textContent=[...new Set(people.map(p=>p.category).filter(Boolean))].length;const act=document.getElementById('d-activity');const recent=[...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);if(recent.length===0){act.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Log your first interaction to see activity here.</p></div>';}else{act.innerHTML=recent.map(i=>{const person=people.find(p=>p.id===i.personId);const note=i.notes?': '+i.notes.slice(0,55)+(i.notes.length>55?'…':''):'';return '<div class="act-item"><div class="act-dot"></div><div><div class="act-text"><strong>'+(person?person.name:'Unknown')+'</strong> — '+i.type+note+'</div><div class="act-time">'+formatDate(i.date)+' · '+timeAgo(i.date)+'</div></div></div>';}).join('');}const catEl=document.getElementById('d-cats');const catCounts={};people.forEach(p=>{if(p.category)catCounts[p.category]=(catCounts[p.category]||0)+1;});const catEntries=Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);if(catEntries.length===0){catEl.innerHTML='<p style="font-size:12px;color:#9ca3af">No data yet.</p>';}else{const max=catEntries[0][1];catEl.innerHTML=catEntries.map(([cat,cnt])=>'<div class="bar-item"><div class="bar-label">'+cat+'</div><div class="bar-cont"><div class="bar-fill" style="width:'+Math.round((cnt/max)*100)+'%"></div></div><div class="bar-cnt">'+cnt+'</div></div>').join('');}const reconEl=document.getElementById('d-reconnect');const needRecon=people.filter(p=>{const ints=interactions.filter(i=>i.personId===p.id);if(ints.length===0)return true;const last=Math.max(...ints.map(i=>new Date(i.date+'T00:00:00').getTime()));return(Date.now()-last)>30*86400000;}).slice(0,5);if(needRecon.length===0){reconEl.innerHTML='<p style="font-size:12px;color:#9ca3af">You\'re all caught up!</p>';}else{reconEl.innerHTML=needRecon.map((p,idx)=>'<div class="ritem" onclick="openDetail(\'' +p.id+ '\')"><div class="avatar '+colorClass(idx)+'" style="width:32px;height:32px;font-size:12px;border-radius:8px">'+initials(p.name)+'</div><div><div style="font-size:13px;font-weight:600">'+p.name+'</div><div style="font-size:11px;color:#9ca3af">'+(p.role||p.category||'')+'</div></div></div>').join('');}}
+function renderPeople(){const q=(document.getElementById('psearch').value||'').toLowerCase();const fc=document.getElementById('fcat').value;const fm=document.getElementById('fmbti').value;let filtered=people.filter(p=>{const matchQ=!q||p.name.toLowerCase().includes(q)||(p.role||'').toLowerCase().includes(q)||(p.company||'').toLowerCase().includes(q)||(p.tags||'').toLowerCase().includes(q);return matchQ&&(!fc||p.category===fc)&&(!fm||p.mbti===fm);});const grid=document.getElementById('pgrid');if(filtered.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👥</div><h3>No people found</h3><p>Add someone or adjust your filters.</p></div>';return;}grid.innerHTML=filtered.map((p,idx)=>{const pInts=interactions.filter(i=>i.personId===p.id);const lastInt=pInts.length>0?formatDate([...pInts].sort((a,b)=>new Date(b.date)-new Date(a.date))[0].date):'Never';const tags=p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):[];return '<div class="person-card" onclick="openDetail(\'' +p.id+ '\')">'+'<div class="pcard-header"><div class="avatar '+colorClass(idx)+'">'+initials(p.name)+'</div><div><div class="pname">'+p.name+'</div><div class="prole">'+([p.role,p.company].filter(Boolean).join(' · ')||'No title')+'</div></div></div>'+'<div class="badges">'+(p.category?'<span class="badge bm">'+p.category+'</span>':'')+(p.mbti?'<span class="badge bd">'+p.mbti+'</span>':'')+(p.disc?'<span class="badge bc">'+p.disc+'</span>':'')+tags.slice(0,2).map(t=>'<span class="badge be">'+t+'</span>').join('')+'</div>'+(p.purpose?'<div class="ppurpose">'+p.purpose.slice(0,90)+(p.purpose.length>90?'…':'')+'</div>':'')+'<div class="pfoot"><span>Last contact: '+lastInt+'</span><span>'+pInts.length+' interaction'+(pInts.length!==1?'s':'')+'</span></div></div>';}).join('');}
+function openAddPerson(){document.getElementById('mp-title').textContent='Add Person';document.getElementById('p-id').value='';['p-name','p-company','p-role','p-email','p-tags','p-notes','p-purpose','p-comm'].forEach(id=>document.getElementById(id).value='');['p-cat','p-mbti','p-disc','p-enn'].forEach(id=>document.getElementById(id).value='');om('m-person');}
+function openEditPerson(id){const p=people.find(x=>x.id===id);if(!p)return;document.getElementById('mp-title').textContent='Edit Person';document.getElementById('p-id').value=p.id;document.getElementById('p-name').value=p.name||'';document.getElementById('p-company').value=p.company||'';document.getElementById('p-role').value=p.role||'';document.getElementById('p-email').value=p.email||'';document.getElementById('p-cat').value=p.category||'';document.getElementById('p-mbti').value=p.mbti||'';document.getElementById('p-disc').value=p.disc||'';document.getElementById('p-enn').value=p.enneagram||'';document.getElementById('p-purpose').value=p.purpose||'';document.getElementById('p-comm').value=p.comm||'';document.getElementById('p-tags').value=p.tags||'';document.getElementById('p-notes').value=p.notes||'';cm('m-detail');om('m-person');}
+function savePerson(){const name=document.getElementById('p-name').value.trim();if(!name){alert('Full name is required.');return;}const existingId=document.getElementById('p-id').value;const person={name,company:document.getElementById('p-company').value.trim(),role:document.getElementById('p-role').value.trim(),email:document.getElementById('p-email').value.trim(),category:document.getElementById('p-cat').value,mbti:document.getElementById('p-mbti').value,disc:document.getElementById('p-disc').value,enneagram:document.getElementById('p-enn').value,purpose:document.getElementById('p-purpose').value.trim(),comm:document.getElementById('p-comm').value.trim(),tags:document.getElementById('p-tags').value.trim(),notes:document.getElementById('p-notes').value.trim()};if(existingId){peopleRef.doc(existingId).update(person).then(showSynced);}else{person.created=new Date().toISOString();peopleRef.add(person).then(showSynced);}cm('m-person');}
+function deletePerson(id){if(!confirm('Delete this person and all their interactions?'))return;peopleRef.doc(id).delete();interactions.filter(i=>i.personId===id).forEach(i=>intsRef.doc(i.id).delete());cm('m-detail');showSynced();}
+function openDetail(id){const p=people.find(x=>x.id===id);if(!p)return;const idx=people.indexOf(p);const pInts=[...interactions.filter(i=>i.personId===id)].sort((a,b)=>new Date(b.date)-new Date(a.date));const tags=p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):[];const timelineHTML=pInts.length===0?'<p style="font-size:12px;color:#9ca3af;padding:4px 0">No interactions logged yet.</p>':'<div class="timeline">'+pInts.map(i=>'<div class="tl-item"><div class="tl-dot '+tlClass(i.sentiment)+'"></div><div class="tl-card '+tlClass(i.sentiment)+'"><div class="tl-head"><span class="tl-type">'+i.type+'</span><span class="tl-date">📅 '+formatDate(i.date)+'</span></div>'+(i.notes?'<div class="tl-notes">'+i.notes+'</div>':'')+'<div class="tl-foot"><span class="sbadge '+sentimentClass(i.sentiment)+'">'+i.sentiment+'</span><button class="btn btn-danger btn-sm" onclick="deleteInteraction(\'' +i.id+ '\',\'' +p.id+ '\')">Delete</button></div></div></div>').join('')+'</div>';document.getElementById('m-detail-body').innerHTML='<div class="det-header"><div class="avatar av-lg '+colorClass(idx)+'">'+initials(p.name)+'</div><div class="det-info"><h2>'+p.name+'</h2><p>'+([p.role,p.company].filter(Boolean).join(' · ')||'No title')+'</p>'+(p.email?'<p style="margin-top:4px;color:#7c83fd">'+p.email+'</p>':'')+'</div></div><div class="badges" style="margin-bottom:16px">'+(p.category?'<span class="badge bm">'+p.category+'</span>':'')+(p.mbti?'<span class="badge bd">MBTI: '+p.mbti+'</span>':'')+(p.disc?'<span class="badge bc">DISC: '+p.disc+'</span>':'')+(p.enneagram?'<span class="badge be">Enn: '+p.enneagram+'</span>':'')+tags.map(t=>'<span class="badge" style="background:#f3f4f6;color:#374151">'+t+'</span>').join('')+'</div>'+(p.purpose?'<div class="dsec"><h4>Why They Matter</h4><p>'+p.purpose+'</p></div>':'')+(p.comm?'<div class="dsec"><h4>How to Engage</h4><p>'+p.comm+'</p></div>':'')+(p.notes?'<div class="dsec"><h4>Notes</h4><p>'+p.notes+'</p></div>':'')+'<div class="dsec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h4 style="margin-bottom:0">Interaction History ('+pInts.length+')</h4><button class="btn btn-primary btn-sm" onclick="openLogInt(\'' +p.id+ '\')">+ Log New Interaction</button></div>'+timelineHTML+'</div>';document.getElementById('m-detail-foot').innerHTML='<button class="btn btn-danger" onclick="deletePerson(\'' +p.id+ '\')">Delete Person</button><button class="btn btn-secondary" onclick="openEditPerson(\'' +p.id+ '\')">Edit Profile</button>';om('m-detail');}
+function openLogInt(personId){if(people.length===0){alert('Add a person first.');return;}document.getElementById('int-id').value='';document.getElementById('int-date').value=today();document.getElementById('int-notes').value='';document.getElementById('int-type').value='Meeting';document.getElementById('int-sentiment').value='Positive';const sel=document.getElementById('int-person-sel');sel.innerHTML=people.map(p=>'<option value="'+p.id+'"'+(p.id===personId?' selected':'')+'>'+p.name+'</option>').join('');cm('m-detail');om('m-int');}
+function saveInteraction(){const personId=document.getElementById('int-person-sel').value;if(!personId){alert('Please select a person.');return;}const date=document.getElementById('int-date').value;if(!date){alert('Please select a date.');return;}const interaction={personId,type:document.getElementById('int-type').value,date,notes:document.getElementById('int-notes').value.trim(),sentiment:document.getElementById('int-sentiment').value};const existingId=document.getElementById('int-id').value;if(existingId){intsRef.doc(existingId).update(interaction).then(()=>{showSynced();openDetail(personId);});}else{intsRef.add(interaction).then(()=>{showSynced();openDetail(personId);});}cm('m-int');}
+function deleteInteraction(intId,personId){if(!confirm('Delete this interaction?'))return;intsRef.doc(intId).delete().then(()=>{showSynced();openDetail(personId);});cm('m-detail');}
+function renderAllInteractions(){const el=document.getElementById('all-ints');if(interactions.length===0){el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><h3>No interactions yet</h3><p>Click + Log Interaction to get started.</p></div>';return;}el.innerHTML=[...interactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(i=>{const person=people.find(p=>p.id===i.personId);return'<div class="iitem"><div class="ihead"><span class="itype">'+(person?person.name:'Unknown')+' — '+i.type+'</span><span class="idate">📅 '+formatDate(i.date)+'</span></div>'+(i.notes?'<div class="inotes">'+i.notes+'</div>':'')+'<div class="ifoot"><span class="sbadge '+sentimentClass(i.sentiment)+'">'+i.sentiment+'</span><span style="font-size:11px;color:#9ca3af">'+timeAgo(i.date)+'</span></div></div>';}).join('');}
+const mbtiData=[{type:'INTJ',name:'Architect',desc:'Strategic, independent, high standards.',tip:'Speak in logic and frameworks. Skip small talk.'},{type:'INTP',name:'Thinker',desc:'Analytical, curious, loves complex problems.',tip:'Engage with ideas. Let them explore before deciding.'},{type:'ENTJ',name:'Commander',desc:'Bold, decisive, natural leader.',tip:'Be direct and competent. Show ROI quickly.'},{type:'ENTP',name:'Debater',desc:'Quick-witted, loves debate and new ideas.',tip:'Challenge them intellectually.'},{type:'INFJ',name:'Advocate',desc:'Idealistic, empathetic, deeply principled.',tip:'Connect on values. Be genuine, not transactional.'},{type:'INFP',name:'Mediator',desc:'Creative, compassionate, guided by inner values.',tip:'Share your authentic story. Avoid pressure tactics.'},{type:'ENFJ',name:'Protagonist',desc:'Charismatic, people-focused, natural mentor.',tip:'Appeal to their desire to help and inspire.'},{type:'ENFP',name:'Campaigner',desc:'Enthusiastic, creative, loves possibilities.',tip:'Match their energy. Focus on big ideas.'},{type:'ISTJ',name:'Logistician',desc:'Reliable, detail-oriented, follows through.',tip:'Be organized. Respect their time and process.'},{type:'ISFJ',name:'Defender',desc:'Caring, loyal, practical.',tip:'Show appreciation. Build trust slowly.'},{type:'ESTJ',name:'Executive',desc:'Organized, direct, takes charge.',tip:'Be punctual, clear, and results-focused.'},{type:'ESFJ',name:'Consul',desc:'Warm, social, attuned to others.',tip:'Be warm and personal. Remember details.'},{type:'ISTP',name:'Virtuoso',desc:'Practical, observant, hands-on.',tip:'Be brief. Let them figure things out.'},{type:'ISFP',name:'Adventurer',desc:'Gentle, artistic, lives in the present.',tip:"Keep it low pressure. Show, don't tell."},{type:'ESTP',name:'Entrepreneur',desc:'Energetic, thrives in fast-paced environments.',tip:'Keep it practical and action-oriented.'},{type:'ESFP',name:'Entertainer',desc:'Spontaneous, fun, loves people.',tip:'Make it fun and personal.'}];
+const discData=[{type:'D — Dominant',desc:'Direct, results-driven, competitive.',tip:'Be brief and confident. Lead with results.'},{type:'I — Influential',desc:'Enthusiastic, social, optimistic.',tip:'Be warm and expressive. Celebrate wins.'},{type:'S — Steady',desc:'Patient, reliable, team-oriented.',tip:'Be calm and consistent. Give time to process.'},{type:'C — Conscientious',desc:'Analytical, accurate, quality-focused.',tip:'Come prepared with data.'}];
+function renderGuide(){document.getElementById('g-mbti').innerHTML=mbtiData.map(m=>'<div class="pcard"><h4>'+m.type+' — '+m.name+'</h4><p>'+m.desc+'</p><p class="tip">💡 '+m.tip+'</p></div>').join('');document.getElementById('g-disc').innerHTML=discData.map(d=>'<div class="pcard"><h4>'+d.type+'</h4><p>'+d.desc+'</p><p class="tip">💡 '+d.tip+'</p></div>').join('');document.getElementById('g-tips').innerHTML='<div class="section"><div class="section-title" style="margin-bottom:14px">How to Identify Personality Types</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"><div class="pcard"><h4>Introvert vs Extrovert</h4><p>Extroverts think out loud and gain energy from people. Introverts pause before speaking and need quiet to recharge.</p></div><div class="pcard"><h4>Thinker vs Feeler</h4><p>Thinkers stay objective. Feelers care about impact on people.</p></div><div class="pcard"><h4>Judger vs Perceiver</h4><p>Judgers are scheduled and closure-seeking. Perceivers are flexible.</p></div><div class="pcard"><h4>Sensor vs Intuitive</h4><p>Sensors focus on facts. Intuitives focus on patterns and possibilities.</p></div><div class="pcard"><h4>Under Stress</h4><p>INTJs withdraw. ENFPs scatter. ISTJs over-control. ENTJs become harsh.</p></div><div class="pcard"><h4>What They Value</h4><p>NTs value competence. NFs value authenticity. SJs value reliability. SPs value freedom.</p></div></div></div>';}
+function switchTab(tab,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['g-mbti','g-disc','g-tips'].forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById('g-'+tab).classList.remove('hidden');}
 renderDashboard();
-
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
-</script>
+<\/script>
 </body>
 </html>
