@@ -92,6 +92,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .trash-actions{display:flex;gap:0.35rem;flex-shrink:0;}
 .trash-empty{text-align:center;padding:3rem 1rem;color:#ccc;}
 .trash-empty .icon{font-size:2.8rem;margin-bottom:0.65rem;}
+.trash-section-title{font-size:0.86rem;font-weight:800;color:#555;margin:1.2rem 0 0.55rem;text-transform:uppercase;letter-spacing:0.04em;}
+.trash-card.interaction-trash{border-left-color:#f59e0b;}
+.trash-card.interaction-trash .del-label{color:#b26b00;}
+
 /* MODALS */
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
 .modal-backdrop.open{display:flex;}
@@ -372,11 +376,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 let people       = JSON.parse(localStorage.getItem('rs_people')       || '[]');
 let interactions = JSON.parse(localStorage.getItem('rs_interactions') || '[]');
 let trash        = JSON.parse(localStorage.getItem('rs_trash')        || '[]');
+let interactionTrash = JSON.parse(localStorage.getItem('rs_interaction_trash') || '[]');
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
 function save() {
   const now = Date.now();
-  trash = trash.filter(p => (now - p.deletedAt) < THIRTY_DAYS); // auto-purge expired
+  trash = trash.filter(p => (now - p.deletedAt) < THIRTY_DAYS); // auto-purge expired contacts
+  interactionTrash = interactionTrash.filter(i => (now - i.deletedAt) < THIRTY_DAYS); // auto-purge expired interaction notes
   const trashedIds = new Set(trash.map(p => p.id));
 
   // Safety migration: if an older version left interactions active for a contact now in Trash,
@@ -391,15 +397,17 @@ function save() {
     interactions = interactions.filter(i => !trashedIds.has(i.personId));
   }
 
-  localStorage.setItem('rs_people',       JSON.stringify(people));
-  localStorage.setItem('rs_interactions', JSON.stringify(interactions));
-  localStorage.setItem('rs_trash',        JSON.stringify(trash));
+  localStorage.setItem('rs_people',             JSON.stringify(people));
+  localStorage.setItem('rs_interactions',       JSON.stringify(interactions));
+  localStorage.setItem('rs_trash',              JSON.stringify(trash));
+  localStorage.setItem('rs_interaction_trash',  JSON.stringify(interactionTrash));
   updateTrashBadge();
 }
 
 function updateTrashBadge() {
   const b = document.getElementById('trash-badge');
-  if (trash.length) { b.textContent = trash.length; b.style.display = 'inline-block'; }
+  const count = trash.length + interactionTrash.length;
+  if (count) { b.textContent = count; b.style.display = 'inline-block'; }
   else b.style.display = 'none';
 }
 
@@ -626,6 +634,16 @@ function showProfile(id) {
   openModal('modal-profile');
 }
 
+
+function findActiveOrTrashedPerson(personId) {
+  return people.find(p => p.id === personId) || trash.find(p => p.id === personId) || null;
+}
+
+function interactionTrashPersonName(i) {
+  const p = findActiveOrTrashedPerson(i.personId);
+  return p ? p.name : (i.personName || 'Unknown person');
+}
+
 // ── INTERACTIONS ───────────────────────────────────────────────────
 function getPersonInteractions(personId) {
   return interactions
@@ -797,15 +815,17 @@ function deleteInteraction(id) {
   if (!interaction) return;
   const personName = interactionPersonName(interaction);
   const dateText = formatInteractionDate(interaction.date) || 'undated';
-  if (!confirm(`Delete this interaction for ${personName} (${dateText})?\n\nThis only deletes this note/interaction. It will not delete the person.`)) return;
+  if (!confirm(`Move this interaction for ${personName} (${dateText}) to Trash?\n\nYou can restore this interaction note from Trash for 30 days. This will not delete the person.`)) return;
 
   const personId = interaction.personId;
+  interactionTrash.push({ ...interaction, deletedAt: Date.now(), deletedFrom: 'active-interactions' });
   interactions = interactions.filter(i => i.id !== id);
   save();
 
   renderInteractions();
   renderDashboard();
   renderPeople();
+  renderTrash();
 
   const profileOpen = document.getElementById('modal-profile').classList.contains('open');
   if (profileOpen && personId && people.some(p => p.id === personId)) {
@@ -877,38 +897,79 @@ function renderInteractions() {
 function renderTrash() {
   const now  = Date.now();
   trash = trash.filter(p => (now - p.deletedAt) < THIRTY_DAYS);
+  interactionTrash = interactionTrash.filter(i => (now - i.deletedAt) < THIRTY_DAYS);
   save();
-  const list    = document.getElementById('trash-list');
+
+  const list     = document.getElementById('trash-list');
   const emptyBtn = document.getElementById('empty-trash-btn');
-  if (!trash.length) {
-    list.innerHTML = `<div class="trash-empty"><div class="icon">🗑️</div><div style="font-weight:600;color:#aaa;">Trash is empty</div><div style="font-size:0.82rem;color:#ccc;margin-top:0.3rem;">Deleted contacts appear here for 30 days</div></div>`;
-    emptyBtn.style.display = 'none'; return;
+  const totalTrashItems = trash.length + interactionTrash.length;
+
+  if (!totalTrashItems) {
+    list.innerHTML = `<div class="trash-empty"><div class="icon">🗑️</div><div style="font-weight:600;color:#aaa;">Trash is empty</div><div style="font-size:0.82rem;color:#ccc;margin-top:0.3rem;">Deleted contacts and interaction notes appear here for 30 days</div></div>`;
+    emptyBtn.style.display = 'none';
+    return;
   }
+
   emptyBtn.style.display = 'inline-flex';
-  list.innerHTML = trash.map(p => {
-    const daysLeft   = Math.ceil((p.deletedAt + THIRTY_DAYS - now) / 86400000);
-    const urgent     = daysLeft <= 3;
-    const deletedDate = new Date(p.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    return `
-      <div class="trash-card">
-        <div class="trash-info">
-          <h4>${esc(p.name)}</h4>
-          <div class="sub">${[p.role,p.company].filter(Boolean).map(esc).join(' · ') || '—'}</div>
-          ${(p.trashedInteractions||[]).length ? `<div class="sub">💬 ${(p.trashedInteractions||[]).length} linked interaction/note${(p.trashedInteractions||[]).length!==1?'s':''} saved with this contact</div>` : ''}
-          <div class="del-label${urgent?' urgent':''}">Deleted ${deletedDate} · Purges in <strong>${daysLeft} day${daysLeft!==1?'s':''}</strong>${urgent?' ⚠️':''}</div>
-        </div>
-        <div class="trash-actions">
-          <button class="btn btn-restore btn-sm" onclick="restorePerson('${p.id}')">♻️ Restore</button>
-          <button class="btn btn-danger btn-sm"  onclick="permanentDelete('${p.id}')">✕ Delete Now</button>
-        </div>
-      </div>`;
-  }).join('');
+
+  const contactHtml = trash.length ? `
+    <div class="trash-section-title">Deleted Contacts</div>
+    ${trash.map(p => {
+      const daysLeft    = Math.ceil((p.deletedAt + THIRTY_DAYS - now) / 86400000);
+      const urgent      = daysLeft <= 3;
+      const deletedDate = new Date(p.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      return `
+        <div class="trash-card">
+          <div class="trash-info">
+            <h4>${esc(p.name)}</h4>
+            <div class="sub">${[p.role,p.company].filter(Boolean).map(esc).join(' · ') || '—'}</div>
+            ${(p.trashedInteractions||[]).length ? `<div class="sub">💬 ${(p.trashedInteractions||[]).length} linked interaction/note${(p.trashedInteractions||[]).length!==1?'s':''} saved with this contact</div>` : ''}
+            <div class="del-label${urgent?' urgent':''}">Deleted ${deletedDate} · Purges in <strong>${daysLeft} day${daysLeft!==1?'s':''}</strong>${urgent?' ⚠️':''}</div>
+          </div>
+          <div class="trash-actions">
+            <button class="btn btn-restore btn-sm" onclick="restorePerson('${p.id}')">♻️ Restore</button>
+            <button class="btn btn-danger btn-sm"  onclick="permanentDelete('${p.id}')">✕ Delete Now</button>
+          </div>
+        </div>`;
+    }).join('')}` : '';
+
+  const interactionHtml = interactionTrash.length ? `
+    <div class="trash-section-title">Deleted Interaction Notes</div>
+    ${interactionTrash.map(i => {
+      const daysLeft    = Math.ceil((i.deletedAt + THIRTY_DAYS - now) / 86400000);
+      const urgent      = daysLeft <= 3;
+      const deletedDate = new Date(i.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const person = findActiveOrTrashedPerson(i.personId);
+      const status = people.some(p => p.id === i.personId) ? 'Active contact' : trash.some(p => p.id === i.personId) ? 'Contact is in Trash' : 'Contact missing';
+      return `
+        <div class="trash-card interaction-trash">
+          <div class="trash-info">
+            <h4>${esc(i.type || 'Interaction')} · ${esc(formatInteractionDate(i.date))}</h4>
+            <div class="sub">For: ${esc(person ? person.name : (i.personName || 'Unknown person'))} · ${esc(status)}</div>
+            ${i.notes ? `<div class="sub" style="max-width:620px;white-space:pre-wrap;margin-top:0.35rem;">${esc(i.notes)}</div>` : '<div class="sub">No notes added.</div>'}
+            ${i.followUpAction ? `<div class="sub">⚡ Action: ${esc(i.followUpAction)}${i.followUpDue ? ` · Due ${esc(formatInteractionDate(i.followUpDue))}` : ''}</div>` : ''}
+            <div class="del-label${urgent?' urgent':''}">Deleted ${deletedDate} · Purges in <strong>${daysLeft} day${daysLeft!==1?'s':''}</strong>${urgent?' ⚠️':''}</div>
+          </div>
+          <div class="trash-actions">
+            <button class="btn btn-restore btn-sm" onclick="restoreInteraction('${i.id}')">♻️ Restore Note</button>
+            <button class="btn btn-danger btn-sm"  onclick="permanentDeleteInteraction('${i.id}')">✕ Delete Now</button>
+          </div>
+        </div>`;
+    }).join('')}` : '';
+
+  list.innerHTML = contactHtml + interactionHtml;
 }
 
 function restorePerson(id) {
   const idx = trash.findIndex(p => p.id === id); if (idx===-1) return;
   const trashedRecord = trash[idx];
-  const restoredInteractions = (trashedRecord.trashedInteractions || []).map(i => ({
+  const personInteractionTrash = interactionTrash.filter(i => i.personId === id).map(i => {
+    const clean = { ...i };
+    delete clean.deletedAt;
+    delete clean.deletedFrom;
+    return clean;
+  });
+  const restoredInteractions = [...(trashedRecord.trashedInteractions || []), ...personInteractionTrash].map(i => ({
     ...i,
     personId: trashedRecord.id,
     personName: trashedRecord.name
@@ -924,6 +985,7 @@ function restorePerson(id) {
   const existingInteractionIds = new Set(interactions.map(i => i.id));
   interactions.push(...restoredInteractions.filter(i => !existingInteractionIds.has(i.id)));
   trash.splice(idx,1);
+  interactionTrash = interactionTrash.filter(i => i.personId !== id);
 
   save();
   renderTrash();
@@ -940,6 +1002,7 @@ function permanentDelete(id) {
 This will also permanently delete all interactions/notes saved with this person in Trash. This cannot be undone.`)) {
     trash = trash.filter(x=>x.id!==id);
     interactions = interactions.filter(i => i.personId !== id);
+    interactionTrash = interactionTrash.filter(i => i.personId !== id);
     save();
     renderTrash();
     renderInteractions();
@@ -949,12 +1012,14 @@ This will also permanently delete all interactions/notes saved with this person 
 }
 
 function emptyTrash() {
-  if (!trash.length) return;
-  if (confirm(`Permanently delete all ${trash.length} contact${trash.length!==1?'s':''} in Trash?
+  const totalTrashItems = trash.length + interactionTrash.length;
+  if (!totalTrashItems) return;
+  if (confirm(`Permanently delete all ${totalTrashItems} trash item${totalTrashItems!==1?'s':''}?
 
-This will also permanently delete all interactions/notes attached to those people. This cannot be undone.`)) {
+This will permanently delete all contacts in Trash and all deleted interaction notes. This cannot be undone.`)) {
     const deletedIds = new Set(trash.map(p => p.id));
     trash = [];
+    interactionTrash = [];
     interactions = interactions.filter(i => !deletedIds.has(i.personId));
     save();
     renderTrash();
@@ -962,6 +1027,60 @@ This will also permanently delete all interactions/notes attached to those peopl
     renderDashboard();
     renderPeople();
   }
+}
+
+
+
+function restoreInteraction(id) {
+  const idx = interactionTrash.findIndex(i => i.id === id);
+  if (idx === -1) return;
+  const i = { ...interactionTrash[idx] };
+
+  const activePerson = people.find(p => p.id === i.personId);
+  const trashedPerson = trash.find(p => p.id === i.personId);
+
+  if (activePerson) {
+    delete i.deletedAt;
+    delete i.deletedFrom;
+    i.personName = activePerson.name;
+    if (!interactions.some(x => x.id === i.id)) interactions.push(i);
+    interactionTrash.splice(idx, 1);
+    save();
+    renderTrash();
+    renderInteractions();
+    renderDashboard();
+    renderPeople();
+    alert(`✅ Interaction restored for "${activePerson.name}".`);
+    return;
+  }
+
+  if (trashedPerson) {
+    const already = trashedPerson.trashedInteractions || [];
+    if (!already.some(x => x.id === i.id)) {
+      const clean = { ...i };
+      delete clean.deletedAt;
+      delete clean.deletedFrom;
+      clean.personName = trashedPerson.name;
+      trashedPerson.trashedInteractions = [...already, clean];
+    }
+    interactionTrash.splice(idx, 1);
+    save();
+    renderTrash();
+    alert(`✅ Interaction restored into "${trashedPerson.name}" in Trash. Restore the person to bring it back to active interactions.`);
+    return;
+  }
+
+  alert('This interaction cannot be restored because the person no longer exists.');
+}
+
+function permanentDeleteInteraction(id) {
+  const i = interactionTrash.find(x => x.id === id);
+  if (!i) return;
+  const personName = interactionTrashPersonName(i);
+  if (!confirm(`Permanently delete this interaction for ${personName}?\n\nThis cannot be undone.`)) return;
+  interactionTrash = interactionTrash.filter(x => x.id !== id);
+  save();
+  renderTrash();
 }
 
 
@@ -1093,6 +1212,6 @@ renderGuide();
 updateTrashBadge();
 </script>
 
-<!-- ROOTSTOCK V7 TRASH-SAFE MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
+<!-- ROOTSTOCK V8 INTERACTION-TRASH MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
 </body>
 </html>
