@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rootstock 🌱 Personal Network Manager</title>
+<title>Rootstock 🌱 Personal Network Manager - Cloud Edition</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f4;color:#1a1a1a;min-height:100vh;display:flex;}
@@ -105,6 +105,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cloud-badge{background:#e8f5e9;color:#2d6a4f;font-size:0.72rem;padding:0.18rem 0.55rem;border-radius:20px;font-weight:600;}
 .reconnect-item{font-size:0.83rem;padding:0.4rem 0;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center;color:#555;}
 .reconnect-item:last-child{border-bottom:none;}
+
+/* RELATIONSHIP TIMELINE / LINKED INTERACTIONS */
+.person-link{cursor:pointer;color:#2d6a4f;font-weight:700;}
+.person-link:hover{text-decoration:underline;}
+.timeline-list{display:flex;flex-direction:column;gap:0.55rem;}
+.timeline-card{font-size:0.82rem;color:#555;padding:0.65rem 0.75rem;background:#f7f9f7;border-radius:8px;border-left:3px solid #2d6a4f;}
+.timeline-card .timeline-head{display:flex;justify-content:space-between;gap:0.5rem;align-items:flex-start;margin-bottom:0.25rem;}
+.timeline-card .timeline-notes{color:#555;line-height:1.45;margin-top:0.28rem;white-space:pre-wrap;}
+.interaction-person-group{background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);overflow:hidden;margin-bottom:0.9rem;}
+.interaction-person-header{padding:0.85rem 1rem;background:#f7f9f7;display:flex;justify-content:space-between;align-items:center;gap:0.7rem;cursor:pointer;border-bottom:1px solid #eef2ee;}
+.interaction-person-header:hover{background:#eef5ef;}
+.interaction-person-header h3{font-size:0.92rem;color:#2d6a4f;margin:0;}
+.interaction-person-body{padding:0.75rem;}
+.i-card.clickable{cursor:pointer;}
+.i-card.clickable:hover{box-shadow:0 4px 14px rgba(0,0,0,0.11);transform:translateY(-1px);}
+
 @media(max-width:640px){
   .sidebar{width:52px;}.sidebar-brand .brand-sub,.nav-label,.nav-item span{display:none;}
   .nav-item{justify-content:center;padding:0.6rem;}.two-col{grid-template-columns:1fr;}
@@ -513,14 +529,14 @@ function renderPeople() {
 
 function showProfile(id) {
   const p = people.find(x => x.id === id); if (!p) return;
-  const pi = interactions.filter(i => i.personId === id);
-  const recent = [...pi].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  const pi = getPersonInteractions(id);
   document.getElementById('profile-content').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
       <div>
         <h2 style="font-size:1.15rem;">${esc(p.name)}</h2>
         <p style="color:#888;font-size:0.84rem;margin-top:0.12rem;">${[p.role,p.company].filter(Boolean).map(esc).join(' · ')}</p>
       </div>
+      <button class="btn btn-primary btn-sm" onclick="openLogInteraction('${p.id}')">+ Add Interaction</button>
     </div>
     <div class="tags-row" style="margin-bottom:0.7rem;">
       ${p.category?`<span class="tag tag-cat">${esc(p.category)}</span>`:''}
@@ -532,23 +548,63 @@ function showProfile(id) {
     ${p.email?`<p style="font-size:0.84rem;margin-bottom:0.7rem;">✉️ <a href="mailto:${esc(p.email)}" style="color:#2d6a4f;">${esc(p.email)}</a></p>`:''}
     ${p.vision?`<div class="profile-section"><h4>Why they matter</h4><p>${esc(p.vision)}</p></div>`:''}
     ${p.engage?`<div class="profile-section"><h4>How to engage</h4><p>${esc(p.engage)}</p></div>`:''}
-    ${p.notes?`<div class="profile-section"><h4>Notes</h4><p>${esc(p.notes)}</p></div>`:''}
-    <div style="margin-top:1rem;">
-      <div style="font-size:0.8rem;font-weight:700;color:#2d6a4f;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.55rem;">Interactions (${pi.length})</div>
-      ${recent.length ? recent.map(i=>`
-        <div style="font-size:0.81rem;color:#555;margin-bottom:0.4rem;padding:0.5rem 0.7rem;background:#f7f9f7;border-radius:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
-          <div><strong>${esc(i.type)}</strong> · ${esc(i.date)}${i.notes?`<div style="color:#888;margin-top:0.18rem;">${esc(i.notes)}</div>`:''}</div>
-          <span class="sentiment ${i.sentiment==='Positive'?'s-positive':i.sentiment==='Neutral'?'s-neutral':'s-followup'}">${esc(i.sentiment)}</span>
-        </div>`).join('') : '<p style="font-size:0.82rem;color:#bbb;">No interactions logged yet.</p>'}
+    ${p.notes?`<div class="profile-section"><h4>Profile Notes</h4><p>${esc(p.notes)}</p></div>`:''}
+    <div class="profile-section">
+      <h4>Relationship Timeline / Interactions (${pi.length})</h4>
+      ${pi.length ? `<div class="timeline-list">${pi.map(i=>`
+        <div class="timeline-card">
+          <div class="timeline-head">
+            <div><strong>${esc(i.type || 'Interaction')}</strong> · ${esc(formatInteractionDate(i.date))}</div>
+            <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
+          </div>
+          ${i.notes?`<div class="timeline-notes">${esc(i.notes)}</div>`:'<div class="timeline-notes" style="color:#aaa;">No notes added.</div>'}
+        </div>`).join('')}</div>` : '<p style="font-size:0.82rem;color:#bbb;">No interactions logged yet. Use “Add Interaction” to add dated notes for this person.</p>'}
     </div>
     <div class="modal-actions" style="margin-top:1.15rem;border-top:1px solid #f0f0f0;padding-top:1.15rem;">
-      <button class="btn btn-secondary" onclick="editPerson('${p.id}')">✏️ Edit</button>
+      <button class="btn btn-primary"   onclick="openLogInteraction('${p.id}')">💬 Add Interaction</button>
+      <button class="btn btn-secondary" onclick="editPerson('${p.id}')">✏️ Edit Person</button>
       <button class="btn btn-danger"    onclick="softDeletePerson('${p.id}')">🗑️ Move to Trash</button>
     </div>`;
   openModal('modal-profile');
 }
 
-// ── INTERACTIONS ──────────────────────────────────────────────────
+// ── INTERACTIONS ───────────────────────────────────────────────────
+function getPersonInteractions(personId) {
+  return interactions
+    .filter(i => i.personId === personId)
+    .sort((a,b) => {
+      const ad = new Date((a.date || '') + 'T00:00:00').getTime() || 0;
+      const bd = new Date((b.date || '') + 'T00:00:00').getTime() || 0;
+      return bd - ad || (b.createdAt || 0) - (a.createdAt || 0);
+    });
+}
+
+function interactionPersonName(i) {
+  const p = people.find(x => x.id === i.personId);
+  return p ? p.name : (i.personName || 'Unknown person');
+}
+
+function sentimentClassName(sentiment) {
+  return sentiment === 'Positive' ? 's-positive' : sentiment === 'Neutral' ? 's-neutral' : 's-followup';
+}
+
+function formatInteractionDate(d) {
+  if (!d) return '';
+  const date = new Date(d + 'T00:00:00');
+  if (isNaN(date.getTime())) return d;
+  return date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function openInteractionPerson(personId) {
+  if (!personId) return;
+  const p = people.find(x => x.id === personId);
+  if (!p) {
+    alert('This interaction is linked to a contact that is no longer active. Check Trash if the person was deleted.');
+    return;
+  }
+  showProfile(personId);
+}
+
 function openLogInteraction(preselect) {
   const sel = document.getElementById('i-person');
   sel.innerHTML = '<option value="">Select person…</option>' +
@@ -556,6 +612,8 @@ function openLogInteraction(preselect) {
   if (preselect) sel.value = preselect;
   document.getElementById('i-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('i-notes').value = '';
+  document.getElementById('i-type').value = 'Meeting';
+  document.getElementById('i-sentiment').value = 'Positive';
   document.getElementById('i-person-err').textContent = '';
   document.getElementById('i-date-err').textContent   = '';
   openModal('modal-interaction');
@@ -565,31 +623,86 @@ function saveInteraction() {
   const pEl = document.getElementById('i-person');
   const dEl = document.getElementById('i-date');
   let ok = true;
-  if (!pEl.value) { document.getElementById('i-person-err').textContent = 'Please select a person.'; ok=false; }
+  if (!pEl.value) { document.getElementById('i-person-err').textContent = 'Please select a person. Interactions must be tied to a contact.'; ok=false; }
   else              document.getElementById('i-person-err').textContent = '';
   if (!dEl.value) { document.getElementById('i-date-err').textContent   = 'Date is required.'; ok=false; }
   else              document.getElementById('i-date-err').textContent   = '';
   if (!ok) return;
+
   const person = people.find(p=>p.id===pEl.value);
-  interactions.push({ id:uid(), personId:pEl.value, personName:person?person.name:'',
-    type:document.getElementById('i-type').value, date:dEl.value,
-    notes:document.getElementById('i-notes').value.trim(),
-    sentiment:document.getElementById('i-sentiment').value, createdAt:Date.now() });
-  save(); closeModal('modal-interaction'); renderInteractions(); renderDashboard();
+  if (!person) { alert('Please choose an active person before saving this interaction.'); return; }
+
+  interactions.push({
+    id: uid(),
+    personId: person.id,
+    personName: person.name,
+    type: document.getElementById('i-type').value,
+    date: dEl.value,
+    notes: document.getElementById('i-notes').value.trim(),
+    sentiment: document.getElementById('i-sentiment').value,
+    createdAt: Date.now()
+  });
+  save();
+  closeModal('modal-interaction');
+  renderInteractions();
+  renderDashboard();
+  renderPeople();
+  if (document.getElementById('modal-profile').classList.contains('open')) showProfile(person.id);
 }
 
 function renderInteractions() {
   const list = document.getElementById('interaction-list');
-  if (!interactions.length) { list.innerHTML='<p style="color:#bbb;padding:2rem 0;">No interactions logged yet.</p>'; return; }
-  list.innerHTML = [...interactions].sort((a,b)=>b.createdAt-a.createdAt).map(i=>`
-    <div class="i-card">
-      <div>
-        <strong style="font-size:0.9rem;">${esc(i.personName)}</strong>
-        <div class="meta">${esc(i.type)} · ${esc(i.date)}</div>
-        ${i.notes?`<div style="font-size:0.82rem;color:#555;margin-top:0.38rem;">${esc(i.notes)}</div>`:''}
-      </div>
-      <span class="sentiment ${i.sentiment==='Positive'?'s-positive':i.sentiment==='Neutral'?'s-neutral':'s-followup'}">${esc(i.sentiment)}</span>
-    </div>`).join('');
+  if (!interactions.length) {
+    list.innerHTML='<p style="color:#bbb;padding:2rem 0;">No interactions logged yet. Add one from a person profile or use + Log Interaction.</p>';
+    return;
+  }
+
+  const activeIds = new Set(people.map(p=>p.id));
+  const grouped = {};
+  interactions.forEach(i => {
+    const key = i.personId || '__unlinked';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(i);
+  });
+
+  const groups = Object.entries(grouped).sort(([,a],[,b]) => {
+    const aLatest = Math.max(...a.map(i => new Date((i.date || '') + 'T00:00:00').getTime() || i.createdAt || 0));
+    const bLatest = Math.max(...b.map(i => new Date((i.date || '') + 'T00:00:00').getTime() || i.createdAt || 0));
+    return bLatest - aLatest;
+  });
+
+  list.innerHTML = groups.map(([personId, items]) => {
+    const person = people.find(p => p.id === personId);
+    const name = person ? person.name : (items[0].personName || 'Unknown person');
+    const sorted = [...items].sort((a,b) => {
+      const ad = new Date((a.date || '') + 'T00:00:00').getTime() || 0;
+      const bd = new Date((b.date || '') + 'T00:00:00').getTime() || 0;
+      return bd - ad || (b.createdAt || 0) - (a.createdAt || 0);
+    });
+    const openAttr = activeIds.has(personId) ? `onclick="openInteractionPerson('${personId}')"` : '';
+    const addBtn = activeIds.has(personId) ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openLogInteraction('${personId}')">+ Add Note</button>` : '';
+    return `
+      <div class="interaction-person-group">
+        <div class="interaction-person-header" ${openAttr}>
+          <div>
+            <h3>${esc(name)}</h3>
+            <div style="font-size:0.76rem;color:#888;margin-top:0.12rem;">${sorted.length} interaction${sorted.length!==1?'s':''}</div>
+          </div>
+          ${addBtn}
+        </div>
+        <div class="interaction-person-body">
+          ${sorted.map(i=>`
+            <div class="i-card clickable" ${openAttr}>
+              <div>
+                <strong style="font-size:0.9rem;">${esc(i.type || 'Interaction')}</strong>
+                <div class="meta">${esc(formatInteractionDate(i.date))} · ${esc(interactionPersonName(i))}</div>
+                ${i.notes?`<div style="font-size:0.82rem;color:#555;margin-top:0.38rem;white-space:pre-wrap;">${esc(i.notes)}</div>`:'<div style="font-size:0.82rem;color:#aaa;margin-top:0.38rem;">No notes added.</div>'}
+              </div>
+              <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── TRASH BIN ─────────────────────────────────────────────────────
@@ -659,7 +772,7 @@ function renderDashboard() {
   const recent = [...interactions].sort((a,b)=>b.createdAt-a.createdAt).slice(0,5);
   const actEl  = document.getElementById('dash-activity');
   actEl.innerHTML = recent.length ? recent.map(i=>
-    `<div style="padding:0.42rem 0;border-bottom:1px solid #f4f4f4;font-size:0.82rem;"><strong>${esc(i.personName)}</strong> — ${esc(i.type)}<span style="color:#bbb;"> · ${esc(i.date)}</span></div>`
+    `<div style="padding:0.42rem 0;border-bottom:1px solid #f4f4f4;font-size:0.82rem;"><strong>${esc(interactionPersonName(i))}</strong> — ${esc(i.type)}<span style="color:#bbb;"> · ${esc(i.date)}</span></div>`
   ).join('') : '<span style="color:#ccc;">No recent activity yet.</span>';
 
   const catMap = {};
@@ -690,7 +803,7 @@ function exportCSV(type) {
     rows    = people.map(p=>[p.name,p.company,p.role,p.email,p.category,p.mbti,p.disc,p.enneagram,p.tags,p.notes,p.vision,p.engage]);
   } else {
     headers = ['Person','Type','Date','Sentiment','Notes'];
-    rows    = interactions.map(i=>[i.personName,i.type,i.date,i.sentiment,i.notes]);
+    rows    = interactions.map(i=>[interactionPersonName(i),i.type,i.date,i.sentiment,i.notes]);
   }
   const csv = [headers,...rows].map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a   = document.createElement('a');
@@ -757,15 +870,6 @@ renderGuide();
 updateTrashBadge();
 </script>
 
-<!-- Firebase integration imported from cloud-sync version -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-const firebaseConfig={apiKey:"AIzaSyCS5NScTGlxqR92gsj6R6z8ftEF3YS8Lg8",authDomain:"rootstock-ba97d.firebaseapp.com",projectId:"rootstock-ba97d",storageBucket:"rootstock-ba97d.firebasestorage.app",messagingSenderId:"169309352205",appId:"1:169309352205:web:07fbffa514187f93268044"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-const peopleRef=db.collection('people');
-const intsRef=db.collection('interactions');
-
+<!-- MERGE NOTE: Base from personal network manager with trash/duplicate checks. Cloud-sync components available in source index.html for integration. -->
 </body>
 </html>
