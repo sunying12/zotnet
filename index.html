@@ -54,6 +54,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tag-disc{background:#fce4ec;color:#880e4f;}
 .tag-gen{background:#f3f4f6;color:#555;}
 .card-actions{margin-top:0.8rem;display:flex;gap:0.35rem;justify-content:flex-end;}
+.person-summary{margin-top:0.65rem;padding-top:0.55rem;border-top:1px solid #f1f4f1;display:flex;justify-content:space-between;gap:0.55rem;flex-wrap:wrap;font-size:0.76rem;color:#777;}
+.person-summary strong{color:#2d6a4f;}
+
 /* INTERACTIONS */
 .interaction-list{display:flex;flex-direction:column;gap:0.65rem;}
 .i-card{background:white;border-radius:12px;padding:1.05rem;box-shadow:0 1px 3px rgba(0,0,0,0.07);display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;}
@@ -580,6 +583,10 @@ function renderPeople() {
           ${p.disc&&p.disc!=='Unknown'?`<span class="tag tag-disc">${esc(p.disc)}</span>`:''}
           ${tagHtml}
         </div>
+        <div class="person-summary">
+          <span>💬 <strong>${getPersonInteractions(p.id).length}</strong> interaction${getPersonInteractions(p.id).length!==1?'s':''}</span>
+          <span>🕒 ${esc(lastContactedLabel(p.id))}</span>
+        </div>
         <div class="card-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm" onclick="editPerson('${p.id}')">✏️ Edit</button>
           <button class="btn btn-danger btn-sm"    onclick="softDeletePerson('${p.id}')">🗑️ Delete</button>
@@ -653,6 +660,29 @@ function getPersonInteractions(personId) {
       const bd = new Date((b.date || '') + 'T00:00:00').getTime() || 0;
       return bd - ad || (b.createdAt || 0) - (a.createdAt || 0);
     });
+}
+
+function getLastInteraction(personId) {
+  const pi = getPersonInteractions(personId);
+  return pi.length ? pi[0] : null;
+}
+
+function lastContactedLabel(personId) {
+  const last = getLastInteraction(personId);
+  if (!last) return 'Never contacted';
+  const label = formatInteractionDate(last.date);
+  const days = daysSinceDate(last.date);
+  if (days === null) return label || 'Unknown date';
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return `${label} (${days}d ago)`;
+}
+
+function daysSinceDate(d) {
+  if (!d) return null;
+  const t = new Date(d + 'T00:00:00').getTime();
+  if (isNaN(t)) return null;
+  return Math.max(0, Math.floor((Date.now() - t) / 86400000));
 }
 
 function interactionPersonName(i) {
@@ -1212,6 +1242,6 @@ renderGuide();
 updateTrashBadge();
 </script>
 
-<!-- ROOTSTOCK V8 INTERACTION-TRASH MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
+<!-- ROOTSTOCK V9 PEOPLE INTERACTION SUMMARY MERGE: person-linked interactions, editable interaction notes, delete interaction, follow-up/action-needed tasks, completion checkboxes, trash cleanup, duplicate checks, CSV export. -->
 </body>
 </html>
