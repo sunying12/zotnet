@@ -113,6 +113,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .timeline-card{font-size:0.82rem;color:#555;padding:0.65rem 0.75rem;background:#f7f9f7;border-radius:8px;border-left:3px solid #2d6a4f;}
 .timeline-card .timeline-head{display:flex;justify-content:space-between;gap:0.5rem;align-items:flex-start;margin-bottom:0.25rem;}
 .timeline-card .timeline-notes{color:#555;line-height:1.45;margin-top:0.28rem;white-space:pre-wrap;}
+.timeline-actions{margin-top:0.45rem;display:flex;justify-content:flex-end;gap:0.35rem;}
 .interaction-person-group{background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);overflow:hidden;margin-bottom:0.9rem;}
 .interaction-person-header{padding:0.85rem 1rem;background:#f7f9f7;display:flex;justify-content:space-between;align-items:center;gap:0.7rem;cursor:pointer;border-bottom:1px solid #eef2ee;}
 .interaction-person-header:hover{background:#eef5ef;}
@@ -558,6 +559,9 @@ function showProfile(id) {
             <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
           </div>
           ${i.notes?`<div class="timeline-notes">${esc(i.notes)}</div>`:'<div class="timeline-notes" style="color:#aaa;">No notes added.</div>'}
+          <div class="timeline-actions">
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️ Delete</button>
+          </div>
         </div>`).join('')}</div>` : '<p style="font-size:0.82rem;color:#bbb;">No interactions logged yet. Use “Add Interaction” to add dated notes for this person.</p>'}
     </div>
     <div class="modal-actions" style="margin-top:1.15rem;border-top:1px solid #f0f0f0;padding-top:1.15rem;">
@@ -650,6 +654,28 @@ function saveInteraction() {
   if (document.getElementById('modal-profile').classList.contains('open')) showProfile(person.id);
 }
 
+
+function deleteInteraction(id) {
+  const interaction = interactions.find(i => i.id === id);
+  if (!interaction) return;
+  const personName = interactionPersonName(interaction);
+  const dateText = formatInteractionDate(interaction.date) || 'undated';
+  if (!confirm(`Delete this interaction for ${personName} (${dateText})?\n\nThis only deletes this note/interaction. It will not delete the person.`)) return;
+
+  const personId = interaction.personId;
+  interactions = interactions.filter(i => i.id !== id);
+  save();
+
+  renderInteractions();
+  renderDashboard();
+  renderPeople();
+
+  const profileOpen = document.getElementById('modal-profile').classList.contains('open');
+  if (profileOpen && personId && people.some(p => p.id === personId)) {
+    showProfile(personId);
+  }
+}
+
 function renderInteractions() {
   const list = document.getElementById('interaction-list');
   if (!interactions.length) {
@@ -698,7 +724,10 @@ function renderInteractions() {
                 <div class="meta">${esc(formatInteractionDate(i.date))} · ${esc(interactionPersonName(i))}</div>
                 ${i.notes?`<div style="font-size:0.82rem;color:#555;margin-top:0.38rem;white-space:pre-wrap;">${esc(i.notes)}</div>`:'<div style="font-size:0.82rem;color:#aaa;margin-top:0.38rem;">No notes added.</div>'}
               </div>
-              <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.45rem;flex-shrink:0;">
+                <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
+                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️ Delete</button>
+              </div>
             </div>`).join('')}
         </div>
       </div>`;
@@ -749,17 +778,35 @@ function restorePerson(id) {
 
 function permanentDelete(id) {
   const p = trash.find(x=>x.id===id); if(!p) return;
-  if (confirm(`Permanently delete "${p.name}"?\n\nThis cannot be undone.`)) {
-    trash = trash.filter(x=>x.id!==id); save(); renderTrash();
+  if (confirm(`Permanently delete "${p.name}"?
+
+This will also permanently delete all interactions/notes attached to this person. This cannot be undone.`)) {
+    trash = trash.filter(x=>x.id!==id);
+    interactions = interactions.filter(i => i.personId !== id);
+    save();
+    renderTrash();
+    renderInteractions();
+    renderDashboard();
+    renderPeople();
   }
 }
 
 function emptyTrash() {
   if (!trash.length) return;
-  if (confirm(`Permanently delete all ${trash.length} contact${trash.length!==1?'s':''} in Trash?\n\nThis cannot be undone.`)) {
-    trash = []; save(); renderTrash();
+  if (confirm(`Permanently delete all ${trash.length} contact${trash.length!==1?'s':''} in Trash?
+
+This will also permanently delete all interactions/notes attached to those people. This cannot be undone.`)) {
+    const deletedIds = new Set(trash.map(p => p.id));
+    trash = [];
+    interactions = interactions.filter(i => !deletedIds.has(i.personId));
+    save();
+    renderTrash();
+    renderInteractions();
+    renderDashboard();
+    renderPeople();
   }
 }
+
 
 // ── DASHBOARD ─────────────────────────────────────────────────────
 function renderDashboard() {
