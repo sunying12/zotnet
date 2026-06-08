@@ -62,6 +62,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .s-positive{background:#e8f5e9;color:#1b5e20;}
 .s-neutral{background:#f5f5f5;color:#555;}
 .s-followup{background:#fff3e0;color:#e65100;}
+.action-box{margin-top:0.55rem;padding:0.55rem 0.7rem;background:#fff8e1;border-left:3px solid #f59e0b;border-radius:8px;font-size:0.8rem;color:#6b4e00;white-space:pre-wrap;}
+.action-box.done{background:#eef7ee;border-left-color:#27ae60;color:#27613a;}
+.action-row{font-size:0.83rem;padding:0.52rem 0;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;color:#555;cursor:pointer;}
+.action-row:hover{background:#fafafa;}
+.action-meta{font-size:0.74rem;color:#999;margin-top:0.12rem;}
+.action-check{width:auto!important;margin-top:0.2rem;transform:scale(1.15);cursor:pointer;flex-shrink:0;}
+.checkbox-row{display:flex;align-items:center;gap:0.45rem;font-size:0.82rem;color:#444;}
+.checkbox-row input{width:auto;}
 /* GUIDE */
 .guide-tabs{display:flex;gap:0.45rem;margin-bottom:1.15rem;flex-wrap:wrap;}
 .guide-tab{padding:0.4rem 0.95rem;border-radius:8px;cursor:pointer;font-size:0.83rem;font-weight:600;border:1.5px solid #ddd;background:white;transition:all 0.15s;}
@@ -172,6 +180,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="dash-card"><h3>Network by Category</h3><div id="dash-cats" style="font-size:0.83rem;color:#aaa;">No data yet.</div></div>
     </div>
     <div class="dash-card" style="margin-top:1.15rem;"><h3>Reconnect Soon</h3><div id="dash-reconnect" style="font-size:0.83rem;color:#aaa;">No data yet.</div></div>
+    <div class="dash-card" style="margin-top:1.15rem;"><h3>Action Needed / Follow-ups</h3><div id="dash-actions" style="font-size:0.83rem;color:#aaa;">No follow-ups yet.</div></div>
   </div>
 
   <!-- PEOPLE -->
@@ -342,6 +351,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <option value="Follow-up needed">Follow-up needed</option>
       </select>
     </div>
+    <div class="form-group">
+      <label class="checkbox-row"><input type="checkbox" id="i-needs-followup" onchange="if(this.checked){document.getElementById('i-sentiment').value='Follow-up needed';}"> Needs follow-up / action</label>
+    </div>
+    <div class="form-group"><label>Action Needed</label><textarea id="i-action" placeholder="e.g. Send proposal, follow up with deck, introduce to Anthony..." style="min-height:56px;"></textarea></div>
+    <div class="form-group"><label>Follow-up Due Date</label><input type="date" id="i-due"></div>
+    <div class="form-group">
+      <label class="checkbox-row"><input type="checkbox" id="i-action-done"> Action completed</label>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-interaction')">Cancel</button>
       <button class="btn btn-primary" onclick="saveInteraction()">Save Interaction</button>
@@ -500,7 +517,7 @@ function renderPeople() {
       (p.tags||'').toLowerCase().includes(search);
     const cH = !catF  || p.category === catF;
     const mH = !mbtiF || p.mbti === mbtiF;
-    const iH = !intF  || (intF === 'followup' && interactions.some(i => i.personId === p.id && i.sentiment === 'Follow-up needed'));
+    const iH = !intF  || (intF === 'followup' && interactions.some(i => i.personId === p.id && needsFollowUp(i)));
     return hit && cH && mH && iH;
   });
 
@@ -559,6 +576,7 @@ function showProfile(id) {
             <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
           </div>
           ${i.notes?`<div class="timeline-notes">${esc(i.notes)}</div>`:'<div class="timeline-notes" style="color:#aaa;">No notes added.</div>'}
+          ${needsFollowUp(i)?`<div class="action-box"><label class="checkbox-row" style="margin-bottom:0.25rem;"><input type="checkbox" class="action-check" onchange="toggleActionCompleted('${i.id}',this.checked)"> <strong>Action needed:</strong></label>${esc(followUpText(i))}<br><span style="font-size:0.74rem;color:#8a6d1d;">${esc(actionDueLabel(i))}</span></div>`:(i.actionCompleted?`<div class="action-box done"><label class="checkbox-row" style="margin-bottom:0.25rem;"><input type="checkbox" class="action-check" checked onchange="toggleActionCompleted('${i.id}',this.checked)"> <strong>Action completed:</strong></label>${esc(followUpText(i))}</div>`:'')}
           <div class="timeline-actions">
             <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteInteraction('${i.id}')">🗑️ Delete</button>
           </div>
@@ -592,6 +610,18 @@ function sentimentClassName(sentiment) {
   return sentiment === 'Positive' ? 's-positive' : sentiment === 'Neutral' ? 's-neutral' : 's-followup';
 }
 
+function needsFollowUp(i) {
+  return !!(i && !i.actionCompleted && (i.needsFollowUp || i.sentiment === 'Follow-up needed' || (i.followUpAction && i.followUpAction.trim())));
+}
+
+function followUpText(i) {
+  return (i && i.followUpAction && i.followUpAction.trim()) ? i.followUpAction.trim() : 'Follow up needed';
+}
+
+function actionDueLabel(i) {
+  return i && i.followUpDue ? `Due ${formatInteractionDate(i.followUpDue)}` : 'No due date';
+}
+
 function formatInteractionDate(d) {
   if (!d) return '';
   const date = new Date(d + 'T00:00:00');
@@ -618,6 +648,10 @@ function openLogInteraction(preselect) {
   document.getElementById('i-notes').value = '';
   document.getElementById('i-type').value = 'Meeting';
   document.getElementById('i-sentiment').value = 'Positive';
+  document.getElementById('i-needs-followup').checked = false;
+  document.getElementById('i-action').value = '';
+  document.getElementById('i-due').value = '';
+  document.getElementById('i-action-done').checked = false;
   document.getElementById('i-person-err').textContent = '';
   document.getElementById('i-date-err').textContent   = '';
   openModal('modal-interaction');
@@ -644,6 +678,11 @@ function saveInteraction() {
     date: dEl.value,
     notes: document.getElementById('i-notes').value.trim(),
     sentiment: document.getElementById('i-sentiment').value,
+    needsFollowUp: document.getElementById('i-needs-followup').checked || document.getElementById('i-sentiment').value === 'Follow-up needed' || !!document.getElementById('i-action').value.trim(),
+    followUpAction: document.getElementById('i-action').value.trim(),
+    followUpDue: document.getElementById('i-due').value,
+    actionCompleted: document.getElementById('i-action-done').checked,
+    completedAt: document.getElementById('i-action-done').checked ? Date.now() : null,
     createdAt: Date.now()
   });
   save();
@@ -654,6 +693,24 @@ function saveInteraction() {
   if (document.getElementById('modal-profile').classList.contains('open')) showProfile(person.id);
 }
 
+
+function toggleActionCompleted(id, checked) {
+  const i = interactions.find(x => x.id === id);
+  if (!i) return;
+  i.actionCompleted = !!checked;
+  if (checked) {
+    i.needsFollowUp = false;
+    i.completedAt = Date.now();
+  } else {
+    i.needsFollowUp = true;
+    delete i.completedAt;
+  }
+  save();
+  renderDashboard();
+  renderInteractions();
+  renderPeople();
+  if (document.getElementById('modal-profile').classList.contains('open') && i.personId) showProfile(i.personId);
+}
 
 function deleteInteraction(id) {
   const interaction = interactions.find(i => i.id === id);
@@ -723,6 +780,7 @@ function renderInteractions() {
                 <strong style="font-size:0.9rem;">${esc(i.type || 'Interaction')}</strong>
                 <div class="meta">${esc(formatInteractionDate(i.date))} · ${esc(interactionPersonName(i))}</div>
                 ${i.notes?`<div style="font-size:0.82rem;color:#555;margin-top:0.38rem;white-space:pre-wrap;">${esc(i.notes)}</div>`:'<div style="font-size:0.82rem;color:#aaa;margin-top:0.38rem;">No notes added.</div>'}
+                ${needsFollowUp(i)?`<div class="action-box"><label class="checkbox-row" style="margin-bottom:0.25rem;"><input type="checkbox" class="action-check" onchange="toggleActionCompleted('${i.id}',this.checked)"> <strong>Action needed:</strong></label>${esc(followUpText(i))}<br><span style="font-size:0.74rem;color:#8a6d1d;">${esc(actionDueLabel(i))}</span></div>`:(i.actionCompleted?`<div class="action-box done"><label class="checkbox-row" style="margin-bottom:0.25rem;"><input type="checkbox" class="action-check" checked onchange="toggleActionCompleted('${i.id}',this.checked)"> <strong>Action completed:</strong></label>${esc(followUpText(i))}</div>`:'')}
               </div>
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.45rem;flex-shrink:0;">
                 <span class="sentiment ${sentimentClassName(i.sentiment)}">${esc(i.sentiment || 'Neutral')}</span>
@@ -812,7 +870,8 @@ This will also permanently delete all interactions/notes attached to those peopl
 function renderDashboard() {
   document.getElementById('stat-people').textContent       = people.length;
   document.getElementById('stat-interactions').textContent = interactions.length;
-  document.getElementById('stat-followup').textContent     = interactions.filter(i=>i.sentiment==='Follow-up needed').length;
+  const openActions = interactions.filter(needsFollowUp);
+  document.getElementById('stat-followup').textContent     = openActions.length;
   const cats = new Set(people.map(p=>p.category).filter(Boolean));
   document.getElementById('stat-cats').textContent = cats.size;
 
@@ -840,6 +899,18 @@ function renderDashboard() {
   rcEl.innerHTML = rcList.length ? rcList.map(p=>
     `<div class="reconnect-item"><span>${esc(p.name)}</span><span style="font-size:0.76rem;color:#e67e22;">${p.daysSince}d ago</span></div>`
   ).join('') : '<span style="color:#ccc;">Everyone\'s been touched recently!</span>';
+
+  const actionsEl = document.getElementById('dash-actions');
+  if (actionsEl) {
+    const sortedActions = openActions.sort((a,b) => {
+      const ad = a.followUpDue ? new Date(a.followUpDue+'T00:00:00').getTime() : Infinity;
+      const bd = b.followUpDue ? new Date(b.followUpDue+'T00:00:00').getTime() : Infinity;
+      return ad - bd || (b.createdAt || 0) - (a.createdAt || 0);
+    }).slice(0,8);
+    actionsEl.innerHTML = sortedActions.length ? sortedActions.map(i=>
+      `<div class="action-row" onclick="openInteractionPerson('${esc(i.personId || '')}')"><div><strong>${esc(interactionPersonName(i))}</strong><div>${esc(followUpText(i))}</div><div class="action-meta">${esc(actionDueLabel(i))} · from ${esc(formatInteractionDate(i.date))}</div></div><span class="sentiment s-followup">Open</span></div>`
+    ).join('') : '<span style="color:#ccc;">No open follow-up actions.</span>';
+  }
 }
 
 // ── EXPORT ────────────────────────────────────────────────────────
@@ -849,8 +920,8 @@ function exportCSV(type) {
     headers = ['Name','Company','Role','Email','Category','MBTI','DISC','Enneagram','Tags','Notes','Vision','Engage'];
     rows    = people.map(p=>[p.name,p.company,p.role,p.email,p.category,p.mbti,p.disc,p.enneagram,p.tags,p.notes,p.vision,p.engage]);
   } else {
-    headers = ['Person','Type','Date','Sentiment','Notes'];
-    rows    = interactions.map(i=>[interactionPersonName(i),i.type,i.date,i.sentiment,i.notes]);
+    headers = ['Person','Type','Date','Sentiment','Needs Follow-up','Action Needed','Follow-up Due','Action Completed','Notes'];
+    rows    = interactions.map(i=>[interactionPersonName(i),i.type,i.date,i.sentiment,needsFollowUp(i)?'Yes':'No',i.followUpAction,i.followUpDue,i.actionCompleted?'Yes':'No',i.notes]);
   }
   const csv = [headers,...rows].map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a   = document.createElement('a');
