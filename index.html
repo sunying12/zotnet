@@ -797,18 +797,55 @@ function renderDashboard() {
 
 // ── EXPORT ────────────────────────────────────────────────────────
 function exportCSV(type) {
-  let headers, rows;
-  if (type==='people') {
-    headers = ['Name','Company','Role','Email','Category','MBTI','DISC','Enneagram','Tags','Notes','Vision','Engage'];
-    rows    = people.map(p=>[p.name,p.company,p.role,p.email,p.category,p.mbti,p.disc,p.enneagram,p.tags,p.notes,p.vision,p.engage]);
+  // Full-history export: interactions stay tied to people and every interaction document is included.
+  const clean = v => (v === undefined || v === null) ? '' : String(v);
+  const fmtCreated = v => {
+    if (!v) return '';
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? clean(v) : d.toISOString();
+  };
+  const interactionRowsForPerson = personId => [...interactions]
+    .filter(i => i.personId === personId)
+    .sort((a,b) => new Date(a.date || 0) - new Date(b.date || 0))
+    .map(i => `${i.date || ''} | ${i.type || ''} | ${i.sentiment || ''} | ${i.notes || ''}`)
+    .join('\n');
+
+  let headers, rows, filenameType;
+  if (type === 'people') {
+    headers = [
+      'Person ID','Name','Company','Role','Email','Category','MBTI','DISC','Enneagram',
+      'Tags','Profile Notes','Vision','Engage','Full Interaction History'
+    ];
+    rows = people.map(p => [
+      p.id,p.name,p.company,p.role,p.email,p.category,p.mbti,p.disc,p.enneagram,
+      p.tags,p.notes,p.vision,p.engage,interactionRowsForPerson(p.id)
+    ]);
+    filenameType = 'people_with_interaction_history';
   } else {
-    headers = ['Person','Type','Date','Sentiment','Notes'];
-    rows    = interactions.map(i=>[interactionPersonName(i),i.type,i.date,i.sentiment,i.notes]);
+    headers = [
+      'Interaction ID','Person ID','Person','Company','Role','Email','Category',
+      'Interaction Type','Interaction Date','Sentiment','Interaction Notes','Created At'
+    ];
+    rows = [...interactions]
+      .sort((a,b) => {
+        const pa = interactionPersonName(a).toLowerCase();
+        const pb = interactionPersonName(b).toLowerCase();
+        if (pa !== pb) return pa.localeCompare(pb);
+        return new Date(a.date || 0) - new Date(b.date || 0);
+      })
+      .map(i => {
+        const p = people.find(person => person.id === i.personId) || {};
+        return [
+          i.id,i.personId,interactionPersonName(i),p.company,p.role,p.email,p.category,
+          i.type,i.date,i.sentiment,i.notes,fmtCreated(i.createdAt)
+        ];
+      });
+    filenameType = 'all_interactions_full_history';
   }
-  const csv = [headers,...rows].map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${clean(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a   = document.createElement('a');
-  a.href    = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = `rootstock_${type}_${new Date().toISOString().split('T')[0]}.csv`;
+  a.href    = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `rootstock_${filenameType}_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
 }
 
