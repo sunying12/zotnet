@@ -26,6 +26,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;}
 .btn-primary:hover{background:#6369e8;}
 .btn-secondary{background:#f3f4f6;color:#374151;}
 .btn-secondary:hover{background:#e5e7eb;}
+.btn-success{background:#d1fae5;color:#065f46;}
+.btn-success:hover{background:#a7f3d0;}
 .btn-danger{background:#fee2e2;color:#dc2626;}
 .btn-danger:hover{background:#fecaca;}
 .btn-sm{padding:4px 10px;font-size:12px;}
@@ -76,7 +78,6 @@ label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5
 input,select,textarea{width:100%;padding:8px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;outline:none;font-family:inherit;}
 input:focus,select:focus,textarea:focus{border-color:#7c83fd;box-shadow:0 0 0 3px rgba(124,131,253,0.1);}
 textarea{resize:vertical;min-height:72px;}
-/* TIMELINE STYLES */
 .timeline{position:relative;padding-left:20px;}
 .timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:#e5e7eb;}
 .tl-item{position:relative;margin-bottom:16px;}
@@ -97,9 +98,6 @@ textarea{resize:vertical;min-height:72px;}
 .sp{background:#d1fae5;color:#065f46;}
 .sn{background:#f3f4f6;color:#374151;}
 .sf{background:#fef3c7;color:#92400e;}
-.add-int-banner{background:#f0f0ff;border:1px dashed #7c83fd;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;cursor:pointer;}
-.add-int-banner:hover{background:#e8e8ff;}
-.add-int-banner span{font-size:13px;color:#7c83fd;font-weight:500;}
 .iitem{padding:13px;background:#f9fafb;border-radius:9px;margin-bottom:9px;border-left:4px solid #7c83fd;}
 .ihead{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
 .itype{font-weight:600;font-size:13px;}
@@ -206,6 +204,7 @@ textarea{resize:vertical;min-height:72px;}
       <div class="header">
         <h1>People</h1>
         <div class="header-actions">
+          <button class="btn btn-success" onclick="exportCSV()">⬇ Export CSV</button>
           <button class="btn btn-primary" onclick="openAddPerson()">+ Add Person</button>
         </div>
       </div>
@@ -233,6 +232,7 @@ textarea{resize:vertical;min-height:72px;}
       <div class="header">
         <h1>All Interactions</h1>
         <div class="header-actions">
+          <button class="btn btn-success" onclick="exportInteractionsCSV()">⬇ Export CSV</button>
           <button class="btn btn-primary" onclick="openLogInt(null)">+ Log Interaction</button>
         </div>
       </div>
@@ -394,6 +394,67 @@ function tlClass(s) {
   if (s === 'Positive') return 'positive';
   if (s === 'Follow-up needed') return 'followup';
   return 'neutral';
+}
+
+// ========================
+// CSV EXPORT
+// ========================
+function escapeCSV(val) {
+  if (val === null || val === undefined) return '';
+  const str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function exportCSV() {
+  if (people.length === 0) { alert('No people to export yet.'); return; }
+  const headers = ['Name','Company','Role','Email','Category','MBTI','DISC','Enneagram','Tags','Why They Matter','How to Engage','Notes','Total Interactions','Last Contact','Date Added'];
+  const rows = people.map(p => {
+    const pInts = interactions.filter(i => i.personId === p.id);
+    const lastContact = pInts.length > 0
+      ? formatDate(pInts.sort((a,b) => new Date(b.date)-new Date(a.date))[0].date)
+      : 'Never';
+    return [
+      p.name, p.company, p.role, p.email, p.category,
+      p.mbti, p.disc, p.enneagram, p.tags,
+      p.purpose, p.comm, p.notes,
+      pInts.length, lastContact,
+      p.created ? formatDate(p.created.split('T')[0]) : ''
+    ].map(escapeCSV).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rootstock-contacts-' + today() + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportInteractionsCSV() {
+  if (interactions.length === 0) { alert('No interactions to export yet.'); return; }
+  const headers = ['Person Name','Company','Role','Date','Type','Sentiment','Notes'];
+  const sorted = [...interactions].sort((a,b) => new Date(b.date)-new Date(a.date));
+  const rows = sorted.map(i => {
+    const person = people.find(p => p.id === i.personId);
+    return [
+      person ? person.name : 'Unknown',
+      person ? person.company : '',
+      person ? person.role : '',
+      i.date, i.type, i.sentiment, i.notes
+    ].map(escapeCSV).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rootstock-interactions-' + today() + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function navigate(view, el) {
@@ -681,9 +742,9 @@ const mbtiData=[
   {type:'ISTJ',name:'Logistician',desc:'Reliable, detail-oriented, follows through consistently.',tip:'Be organized and prepared. Respect their time and process.'},
   {type:'ISFJ',name:'Defender',desc:'Caring, loyal, practical. Puts others first.',tip:'Show appreciation. Build trust slowly and genuinely.'},
   {type:'ESTJ',name:'Executive',desc:'Organized, direct, takes charge. Values tradition and order.',tip:'Be punctual, clear, and results-focused.'},
-  {type:'ESFJ',name:'Consul',desc:'Warm, social, highly attuned to others\' needs.',tip:'Be warm and personal. Remember details about their life.'},
+  {type:'ESFJ',name:'Consul',desc:"Warm, social, highly attuned to others' needs.",tip:'Be warm and personal. Remember details about their life.'},
   {type:'ISTP',name:'Virtuoso',desc:'Practical, observant, hands-on problem solver.',tip:'Be brief. Let them figure things out independently.'},
-  {type:'ISFP',name:'Adventurer',desc:'Gentle, artistic, lives in the present moment.',tip:'Keep it low pressure. Show, don\'t tell.'},
+  {type:'ISFP',name:'Adventurer',desc:'Gentle, artistic, lives in the present moment.',tip:"Keep it low pressure. Show, don't tell."},
   {type:'ESTP',name:'Entrepreneur',desc:'Energetic, observant, thrives in fast-paced environments.',tip:'Keep it practical and action-oriented. No long theory.'},
   {type:'ESFP',name:'Entertainer',desc:'Spontaneous, fun, loves people and experiences.',tip:'Make it fun and personal. They respond to enthusiasm.'}
 ];
